@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Основные цвета -->
+    <color name="colorPrimary">#2E7D32</color>
+    <color name="colorPrimaryDark">#1B5E20</color>
+    <color name="colorAccent">#FF6D00</color>
+
+    <!-- Фоны -->
+    <color name="background">#FFFFFF</color>
+    <color name="surface">#FAFAFA</color>
+
+    <!-- Текст -->
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="gray_text">#757575</color>
+
+    <!-- Цвета кружочков -->
+    <color name="circle_color_1">#4CAF50</color>
+    <color name="circle_color_2">#2196F3</color>
+    <color name="circle_color_3">#9C27B0</color>
+    <color name="circle_color_4">#FF9800</color>
+    <color name="circle_color_5">#F44336</color>
+
+    <!-- Статусные цвета -->
+    <color name="green_success">#388E3C</color>
+    <color name="orange_warning">#F57C00</color>
+    <color name="red_error">#D32F2F</color>
+    <color name="blue_info">#1976D2</color>
+
+    <!-- Дополнительные -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+</resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Указываем параметры USB устройств для автоматического обнаружения -->
+    <usb-device vendor-id="1234" product-id="5678" />
+    <usb-device vendor-id="9012" product-id="3456" />
+    <!-- Можно добавить конкретные устройства или оставить пустым для всех -->
+</resources>

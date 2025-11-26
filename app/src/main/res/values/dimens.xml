@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="circle_size">40dp</dimen>
+    <dimen name="circle_margin">8dp</dimen>
+    <dimen name="button_corner_radius">12dp</dimen>
+    <dimen name="status_corner_radius">12dp</dimen>
+</resources>
