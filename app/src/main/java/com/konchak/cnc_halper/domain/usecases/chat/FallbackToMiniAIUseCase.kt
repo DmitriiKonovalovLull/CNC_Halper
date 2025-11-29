@@ -7,7 +7,7 @@ import javax.inject.Inject
 class FallbackToMiniAIUseCase @Inject constructor(
     private val aiRepository: AIRepository
 ) {
-    suspend operator fun invoke(originalMessage: String, cloudError: Exception): AIResponse {
+    suspend operator fun invoke(originalMessage: String, @Suppress("unused") cloudError: Exception): AIResponse {
         return aiRepository.processWithMiniAI(originalMessage)
     }
 }

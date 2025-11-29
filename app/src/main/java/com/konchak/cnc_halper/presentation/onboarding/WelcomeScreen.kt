@@ -21,6 +21,15 @@ fun WelcomeScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
+    // ✅ ИЗМЕНЕНО: LaunchedEffect с ключом state.isOnboardingCompleted
+    LaunchedEffect(state.isOnboardingCompleted) {
+        if (state.isOnboardingCompleted) {
+            navController.navigate(Screen.Main.route) {
+                popUpTo(Screen.Welcome.route) { inclusive = true }
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -88,11 +97,18 @@ fun WelcomeScreen(
 
             TextButton(
                 onClick = {
-                    viewModel.onEvent(WelcomeEvent.SkipOnboarding)
-                    navController.navigate(Screen.Main.route)
+                    navController.navigate(Screen.Registration.route)
                 }
             ) {
-                Text("Пропустить настройку")
+                Text("Зарегистрироваться")
+            }
+
+            TextButton(
+                onClick = {
+                    viewModel.onEvent(WelcomeEvent.ResetOnboarding)
+                }
+            ) {
+                Text("Сбросить настройку (для теста)")
             }
         }
     }

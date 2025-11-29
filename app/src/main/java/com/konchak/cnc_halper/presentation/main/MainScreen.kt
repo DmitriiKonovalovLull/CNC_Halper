@@ -1,34 +1,31 @@
+// app/src/main/java/com/konchak/cnc_halper/presentation/main/MainScreen.kt
 package com.konchak.cnc_halper.presentation.main
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.Chat // ✅ ИСПРАВЛЕНО
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.konchak.cnc_halper.presentation.navigation.AppNavigation
 import com.konchak.cnc_halper.presentation.navigation.Screen
+import com.konchak.cnc_halper.presentation.navigation.appGraph
 
-@Suppress("unused")
 @Composable
-fun MainScreen(
-    viewModel: MainViewModel = hiltViewModel()
-) {
+fun MainScreen() { // ✅ ИСПРАВЛЕНО: убрал неиспользуемый параметр viewModel
     val navController = rememberNavController()
     val currentBackStack by navController.currentBackStackEntryAsState()
     val currentDestination = currentBackStack?.destination
 
     val screens = listOf(
         Screen.MachineList,
-        Screen.ToolScanner,
+        Screen.ToolList,
         Screen.Chat,
-        Screen.Settings
+        Screen.Profile
     )
 
     Scaffold(
@@ -40,9 +37,10 @@ fun MainScreen(
                             Icon(
                                 imageVector = when (screen) {
                                     Screen.MachineList -> Icons.Default.Business
-                                    Screen.ToolScanner -> Icons.Default.QrCodeScanner
-                                    Screen.Chat -> Icons.AutoMirrored.Filled.Chat
-                                    else -> Icons.Default.Person // Добавлена ветка else
+                                    Screen.ToolList -> Icons.Default.Build
+                                    Screen.Chat -> Icons.AutoMirrored.Filled.Chat // ✅ ИСПРАВЛЕНО
+                                    Screen.Profile -> Icons.Default.Person
+                                    else -> Icons.Default.Person
                                 },
                                 contentDescription = null
                             )
@@ -51,9 +49,10 @@ fun MainScreen(
                             Text(
                                 text = when (screen) {
                                     Screen.MachineList -> "Станки"
-                                    Screen.ToolScanner -> "Сканер"
+                                    Screen.ToolList -> "Инструменты"
                                     Screen.Chat -> "Чат"
-                                    else -> "Профиль" // Добавлена ветка else
+                                    Screen.Profile -> "Профиль"
+                                    else -> "Профиль"
                                 }
                             )
                         },
@@ -72,9 +71,12 @@ fun MainScreen(
             }
         }
     ) { paddingValues ->
-        AppNavigation(
+        androidx.navigation.compose.NavHost(
             navController = navController,
+            startDestination = Screen.MachineList.route,
             modifier = Modifier.padding(paddingValues)
-        )
+        ) {
+            appGraph(navController)
+        }
     }
 }

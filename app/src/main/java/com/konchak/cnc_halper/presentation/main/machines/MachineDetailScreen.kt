@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack // ✅ ИСПРАВЛЕНО
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -20,7 +20,6 @@ import androidx.navigation.NavController
 import com.konchak.cnc_halper.domain.models.Machine
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Suppress("unused")
 @Composable
 fun MachineDetailScreen(
     navController: NavController,
@@ -41,7 +40,7 @@ fun MachineDetailScreen(
                 title = { Text(state.machine?.name ?: "Детали станка") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Назад")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Назад") // ✅ ИСПРАВЛЕНО
                     }
                 },
                 actions = {

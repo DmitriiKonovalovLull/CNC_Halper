@@ -10,7 +10,6 @@ class DateUtils @Inject constructor() {
 
     fun formatTimestamp(timestamp: Long): String {
         val date = Date(timestamp)
-        val now = Date()
 
         return when {
             isToday(date) -> {

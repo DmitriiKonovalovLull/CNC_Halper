@@ -5,6 +5,8 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import android.content.Context
+import androidx.room.TypeConverters
+import com.konchak.cnc_halper.data.local.database.converters.ToolUsageRecordConverter
 import com.konchak.cnc_halper.data.local.database.dao.OperatorDao
 import com.konchak.cnc_halper.data.local.database.dao.ChatDao
 import com.konchak.cnc_halper.data.local.database.dao.ToolDao
@@ -18,9 +20,10 @@ import com.konchak.cnc_halper.data.local.database.entities.OfflineCacheEntity
 
 @Database(
     entities = [OperatorEntity::class, ChatEntity::class, ToolEntity::class, MachineEntity::class, OfflineCacheEntity::class],
-    version = 3,
+    version = 14, // Увеличиваем версию базы данных
     exportSchema = false
 )
+@TypeConverters(ToolUsageRecordConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun operatorDao(): OperatorDao
     abstract fun chatDao(): ChatDao
@@ -38,7 +41,8 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "cnc_database"
-                ).build()
+                ).fallbackToDestructiveMigration() // Добавляем эту строку
+                .build()
                 INSTANCE = instance
                 instance
             }

@@ -5,7 +5,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.SmartToy
+import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.filled.WifiOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -42,12 +45,14 @@ fun TutorialScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Индикатор прогресса
+            // ✅ ИСПРАВЛЕННЫЙ Индикатор прогресса
             LinearProgressIndicator(
-                progress = { (state.currentStep + 1) / state.totalSteps.toFloat() },
+                progress = { (state.currentStep + 1) / state.totalSteps.toFloat() }, // ✅ Лямбда для progress
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(4.dp)
+                    .height(4.dp),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant
             )
 
             // Контент обучения

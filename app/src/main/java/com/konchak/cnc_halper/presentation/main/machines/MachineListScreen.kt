@@ -5,282 +5,139 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
-import com.konchak.cnc_halper.domain.models.ui.MachineUiModel
-import com.konchak.cnc_halper.presentation.navigation.Screen.EquipmentSetup
-import com.konchak.cnc_halper.presentation.navigation.Screen.MachineDetail
-import androidx.compose.ui.text.style.TextAlign
+import androidx.navigation.NavHostController
+import com.konchak.cnc_halper.domain.models.Machine
+import com.konchak.cnc_halper.presentation.components.RotatingGear
+import com.konchak.cnc_halper.presentation.components.WorkingIndicator
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Suppress("unused")
 @Composable
 fun MachineListScreen(
-    navController: NavController,
+    navController: NavHostController,
     viewModel: MachineListViewModel = hiltViewModel()
 ) {
-    val state by viewModel.state.collectAsState()
+    val machines by viewModel.machines.collectAsState()
+    
+    // Временные данные для демонстрации анимаций
+    val workingMachines = remember { mutableStateListOf("machine_1", "machine_3") }
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Мои станки") },
-                actions = {
-                    IconButton(onClick = { viewModel.onEvent(MachineListEvent.Refresh) }) {
-                        Icon(Icons.Default.Refresh, "Обновить")
-                    }
+                title = {
+                    Text(
+                        "Мои станки",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp
+                    )
                 }
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
+            FloatingActionButton(
                 onClick = {
-                    navController.navigate(EquipmentSetup.route)
-                },
-                icon = { Icon(Icons.Default.Add, "Добавить") },
-                text = { Text("Добавить станок") }
-            )
+                    // Запускаем экран добавления нового станка
+                    navController.navigate("add_machine") // Используйте ваш маршрут
+                }
+            ) {
+                Icon(Icons.Default.Add, "Добавить станок")
+            }
         }
     ) { paddingValues ->
-        when {
-            state.isLoading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-
-            state.machines.isEmpty() -> {
-                EmptyMachinesState(
-                    modifier = Modifier.padding(paddingValues),
-                    onAddMachine = {
-                        navController.navigate(EquipmentSetup.route)
+        LazyColumn(
+            modifier = Modifier
+                .padding(paddingValues)
+                .fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(machines, key = { it.id }) { machine ->
+                MachineItem(
+                    machine = machine,
+                    isWorking = workingMachines.contains(machine.id),
+                    onClick = { 
+                        navController.navigate(
+                            "machine_detail/${machine.id}"
+                        ) 
                     }
                 )
             }
-
-            else -> {
-                MachineListContent(
-                    state = state,
-                    modifier = Modifier.padding(paddingValues),
-                    onMachineClick = { machineId: String ->
-                        navController.navigate(MachineDetail.createRoute(machineId))
-                    },
-                    onSyncClick = { viewModel.onEvent(MachineListEvent.SyncMachines) }
-                )
-            }
         }
     }
 }
 
-@Suppress("unused")
 @Composable
-fun MachineListContent(
-    state: MachineListState,
-    modifier: Modifier = Modifier,
-    onMachineClick: (String) -> Unit,
-    onSyncClick: () -> Unit
-) {
-    Column(modifier = modifier) {
-        // Статус синхронизации
-        if (state.syncStatus != null) {
-            SyncStatusCard(
-                syncStatus = state.syncStatus,
-                onSyncClick = onSyncClick,
-                modifier = Modifier.padding(16.dp)
-            )
-        }
-
-        // Список станков
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(16.dp)
-        ) {
-            items(state.machines, key = { it.id }) { machine ->
-                MachineCard(
-                    machine = machine,
-                    onClick = { onMachineClick(machine.id) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        }
-    }
-}
-
-@Suppress("unused")
-@Composable
-fun MachineCard(
-    machine: MachineUiModel,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+fun MachineItem(
+    machine: Machine,
+    isWorking: Boolean,
+    onClick: () -> Unit
 ) {
     Card(
         onClick = onClick,
-        modifier = modifier
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Заменяем иконку на эмодзи
-            Text(
-                text = "🏭", // Эмодзи фабрики/станка
-                modifier = Modifier.size(40.dp),
-                style = MaterialTheme.typography.headlineMedium
-            )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
+            // Анимации работы
             Column(
-                modifier = Modifier.weight(1f)
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
+                WorkingIndicator(isWorking = isWorking)
+                RotatingGear(isRotating = isWorking)
+            }
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            // Информация о станке
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = machine.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    machine.name,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
                 )
                 Text(
-                    text = machine.model,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    machine.model,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 14.sp
                 )
-                if (machine.serialNumber.isNotBlank()) {
+                
+                if (isWorking) {
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "SN: ${machine.serialNumber}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        "⚡ В работе",
+                        color = Color(0xFFFF6B35),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
                     )
                 }
             }
-
-            // Заменяем стрелку на эмодзи
-            Text(
-                text = "➡️", // Эмодзи стрелки вправо
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
-    }
-}
-
-@Suppress("unused")
-@Composable
-fun SyncStatusCard(
-    syncStatus: MachineSyncStatus, // Исправлено: используем MachineSyncStatus вместо SyncStatus
-    onSyncClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = when (syncStatus) {
-                is MachineSyncStatus.Success -> MaterialTheme.colorScheme.surface
-                is MachineSyncStatus.Error -> MaterialTheme.colorScheme.errorContainer
-                is MachineSyncStatus.Pending -> MaterialTheme.colorScheme.surfaceVariant
-            }
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column {
+            
+            // Статус станка
+            Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = when (syncStatus) {
-                        is MachineSyncStatus.Success -> "✅ Синхронизировано"
-                        is MachineSyncStatus.Error -> "❌ Ошибка синхронизации"
-                        is MachineSyncStatus.Pending -> "🔄 Требуется синхронизация"
-                    },
-                    style = MaterialTheme.typography.titleSmall
+                    if (isWorking) "Активен" else "Остановлен",
+                    color = if (isWorking) Color(0xFF48BB78) else MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 12.sp
                 )
-                when (syncStatus) {
-                    is MachineSyncStatus.Success -> {
-                        Text(
-                            text = "${syncStatus.syncedCount} станков обновлено",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                    is MachineSyncStatus.Error -> {
-                        Text(
-                            text = syncStatus.message,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                    is MachineSyncStatus.Pending -> {
-                        Text(
-                            text = "${syncStatus.pendingCount} станков ждут синхронизации",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                }
+                Text(
+                    "ID: ${machine.id.take(8)}",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 10.sp
+                )
             }
-
-            if (syncStatus is MachineSyncStatus.Pending || syncStatus is MachineSyncStatus.Error) {
-                TextButton(onClick = onSyncClick) {
-                    Text("🔄 Синхронизировать")
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun EmptyMachinesState(
-    modifier: Modifier = Modifier,
-    onAddMachine: () -> Unit
-) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        // Заменяем иконку на эмодзи
-        Text(
-            text = "🏭", // Эмодзи фабрики/станка
-            style = MaterialTheme.typography.headlineLarge,
-            modifier = Modifier.size(120.dp)
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = "Станки не добавлены",
-            style = MaterialTheme.typography.headlineSmall,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "Добавьте ваши станки для начала работы",
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Button(onClick = onAddMachine) {
-            Text("➕ Добавить первый станок")
         }
     }
 }

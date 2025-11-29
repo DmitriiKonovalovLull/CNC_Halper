@@ -1,31 +1,36 @@
-// app/src/main/java/com/konchak/cnc_halper/data/local/database/entities/ToolEntity.kt
 package com.konchak.cnc_halper.data.local.database.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import androidx.room.ColumnInfo
 
 @Entity(tableName = "tools")
 data class ToolEntity(
     @PrimaryKey(autoGenerate = true)
-    @ColumnInfo(name = "id")
     val id: Long = 0,
 
-    @ColumnInfo(name = "operator_id")
+    // Основные поля
     val operatorId: Long,
-
-    @ColumnInfo(name = "name")
     val name: String,
-
-    @ColumnInfo(name = "type")
     val type: String,
-
-    @ColumnInfo(name = "size")
     val size: String,
-
-    @ColumnInfo(name = "photo_path")
     val photoPath: String? = null,
 
-    @ColumnInfo(name = "created_at")
-    val createdAt: Long = System.currentTimeMillis()
+    // Технические характеристики
+    val diameter: Float = 0f,
+    val length: Float = 0f,
+    val material: String = "",
+    val coating: String = "",
+
+    // Состояние инструмента
+    val wearLevel: Int = 1, // 1-5 шкала износа
+    val status: String = "active", // active, worn, broken, maintenance
+    val lastUsed: Long = System.currentTimeMillis(),
+    val machineId: String? = "",
+    val notes: String = "",
+
+    // Системные поля
+    val createdAt: Long = System.currentTimeMillis(),
+    val lastSync: Long = System.currentTimeMillis(),
+    val isSynced: Boolean = false,
+    val usageHistory: String = "" // ✅ ДОБАВЛЕНО: JSON-строка с историей
 )

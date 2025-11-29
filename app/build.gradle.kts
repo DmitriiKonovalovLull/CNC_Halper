@@ -1,18 +1,19 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.hilt)
+    alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.google.services)
 }
 
 android {
     namespace = "com.konchak.cnc_halper"
-    compileSdk = 36
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.konchak.cnc_halper"
-        minSdk = 21
-        targetSdk = 36
+        minSdk = 24
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
@@ -20,19 +21,30 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-
-        // Добавьте эти BuildConfig поля для URL
-        buildConfigField("String", "BASE_URL", "\"https://api.your-cnc-service.com/\"")
-        buildConfigField("String", "AI_SERVICE_URL", "\"https://ai.your-service.com/\"")
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("String", "BASE_URL", "\"https://api.your-cnc-service.com/\"")
+            buildConfigField("String", "AI_SERVICE_URL", "\"https://ai.your-service.com/\"")
+            buildConfigField("String", "FIREBASE_PROJECT_ID", "\"cnc-helper-production\"")
+            buildConfigField("boolean", "ENABLE_ANALYTICS", "true")
+            buildConfigField("boolean", "LOG_DEBUG", "false")
+        }
+        debug {
+            isMinifyEnabled = false
+            applicationIdSuffix = ".debug"
+            buildConfigField("String", "BASE_URL", "\"https://dev-api.your-cnc-service.com/\"")
+            buildConfigField("String", "AI_SERVICE_URL", "\"https://dev-ai.your-service.com/\"")
+            buildConfigField("String", "FIREBASE_PROJECT_ID", "\"cnc-helper-dev\"")
+            buildConfigField("boolean", "ENABLE_ANALYTICS", "false")
+            buildConfigField("boolean", "LOG_DEBUG", "true")
         }
     }
 
@@ -50,7 +62,7 @@ android {
         buildConfig = true
     }
 
-    @Suppress("UnstableApiUsage")
+    // 🔥 ДОБАВЬ ЭТОТ БЛОК!
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.8"
     }
@@ -58,6 +70,13 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/DEPENDENCIES"
+            excludes += "META-INF/LICENSE"
+            excludes += "META-INF/LICENSE.txt"
+            excludes += "META-INF/license.txt"
+            excludes += "META-INF/NOTICE"
+            excludes += "META-INF/NOTICE.txt"
+            excludes += "META-INF/INDEX.LIST"
         }
     }
 }
@@ -84,6 +103,7 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.androidx.hilt.work)
 
     // Local DB - Room
     implementation(libs.androidx.room.runtime)
@@ -97,11 +117,44 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.core)
 
-    // Network
+    // Network - 🔥 ДОБАВЬ OKHTTP!
+    implementation(libs.okhttp) // ОСНОВНАЯ БИБЛИОТЕКА
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
-    implementation(libs.okhttp)
     implementation(libs.okhttp.logging.interceptor)
+
+    // Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.storage)
+    implementation(libs.firebase.messaging)
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.auth)
+
+    // ML Kit
+    implementation(libs.mlkit.barcodeScanning)
+    implementation(libs.mlkit.objectDetection)
+    implementation(libs.mlkit.imageLabeling)
+
+    // TensorFlow Lite
+    implementation(libs.tensorflow.lite)
+    implementation(libs.tensorflow.lite.support)
+    implementation(libs.tensorflow.lite.metadata)
+
+    // CameraX
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
+
+    // WorkManager
+    implementation(libs.androidx.work.runtime.ktx)
+
+    // Biometric
+    implementation(libs.androidx.biometric)
+
+    // Additional
+    implementation(libs.coil.compose)
+    implementation(libs.accompanist.permissions)
 
     // Testing
     testImplementation(libs.junit)

@@ -1,8 +1,8 @@
+// app/src/main/java/com/konchak/cnc_halper/presentation/navigation/Screen.kt
 package com.konchak.cnc_halper.presentation.navigation
 
 sealed class Screen(val route: String) {
     // Onboarding flow
-    @Suppress("unused")
     object Welcome : Screen("welcome")
     object RoleSelection : Screen("role_selection")
     object EquipmentSetup : Screen("equipment_setup")
@@ -10,18 +10,23 @@ sealed class Screen(val route: String) {
 
     // Main flow
     object Main : Screen("main")
-    object MachineList : Screen("machine_list")
-    object MachineDetail : Screen("machine_detail/{machineId}") {
-        fun createRoute(machineId: String) = "machine_detail/$machineId"
-    }
-    object ToolScanner : Screen("tool_scanner")
-    @Suppress("unused")
-    object OfflineToolAnalysis : Screen("offline_tool_analysis")
-    object Chat : Screen("chat")
-    @Suppress("unused")
-    object OfflineChat : Screen("offline_chat")
-    @Suppress("unused")
-    object Profile : Screen("profile")
-    object Settings : Screen("settings")
-}
 
+    // Auth flow
+    object Registration : Screen("registration")
+
+    // Machines flow
+    object MachineList : Screen("machine_list")
+    object MachineDetail : Screen("machine_detail/{machineId}")
+
+    // Tools flow
+    object ToolList : Screen("tool_list")
+    object ToolDetail : Screen("tool_detail/{toolId}")
+    object ToolScanner : Screen("tool_scanner")
+    object AddTool : Screen("add_tool")
+    object EditTool : Screen("edit_tool/{toolId}")
+
+    // Other
+    object Chat : Screen("chat")
+    object Settings : Screen("settings")
+    object Profile : Screen("profile") // ✅ ДОБАВЛЕНО
+}

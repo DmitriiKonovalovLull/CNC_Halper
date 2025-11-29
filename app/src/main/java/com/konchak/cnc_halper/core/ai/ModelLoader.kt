@@ -43,7 +43,7 @@ class ModelLoader @Inject constructor(
     }
 
     @Suppress("unused")
-    suspend fun optimizeModelForDevice(model: MiniAIModel): MiniAIModel {
+    suspend fun optimizeModelForDevice(@Suppress("unused") model: MiniAIModel): MiniAIModel {
         return try {
             // Имитация оптимизации модели под устройство
             kotlinx.coroutines.delay(1000)

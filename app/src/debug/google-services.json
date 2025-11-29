@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "497459455870",
+    "project_id": "cnc-halper",
+    "storage_bucket": "cnc-halper.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:497459455870:android:589cafc64e10449792f52f",
+        "android_client_info": {
+          "package_name": "com.konchak.cnc_halper.debug"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA5t31BetxJIs6cS-5HutpgynktjeLAt7U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

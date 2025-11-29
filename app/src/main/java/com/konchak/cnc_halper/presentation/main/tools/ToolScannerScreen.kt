@@ -20,6 +20,18 @@ fun ToolScannerScreen(
     viewModel: ToolScannerViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val navigationEvent by viewModel.navigationEvent.collectAsState()
+
+    // ✅ ДОБАВЛЯЕМ: Обработка навигации
+    LaunchedEffect(navigationEvent) {
+        when (navigationEvent) {
+            "tool_saved" -> {
+                // Возвращаемся к списку инструментов
+                navController.popBackStack()
+                viewModel.clearNavigation()
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -84,13 +96,20 @@ fun ToolScannerScreen(
                     .padding(16.dp)
             )
         }
+        
+        // ✅ ДОБАВЛЯЕМ: Уведомление об успешном сохранении
+        if (state.isSaved) {
+            LaunchedEffect(Unit) {
+                // Можно показать Snackbar или другое уведомление
+            }
+        }
     }
 }
 
 @Composable
 fun CameraPreviewSection(
     state: ToolScannerState,
-    onEvent: (ToolScannerEvent) -> Unit,
+    @Suppress("unused") onEvent: (ToolScannerEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(

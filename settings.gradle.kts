@@ -14,5 +14,8 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "CNC_Halper"
+rootProject.name = "CNC_Helper"
 include(":app")
+
+// 🔥 ЭТА СТРОКА ОБЯЗАТЕЛЬНА для работы alias в корневом build.gradle.kts
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")":app"
