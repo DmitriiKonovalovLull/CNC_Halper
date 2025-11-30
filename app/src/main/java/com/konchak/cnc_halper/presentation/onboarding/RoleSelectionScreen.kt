@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material.icons.filled.PrecisionManufacturing
 import androidx.compose.material.icons.filled.SupervisorAccount
@@ -13,10 +15,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.konchak.cnc_halper.R // Import R for string resources
+import com.konchak.cnc_halper.domain.models.UserRole
 import com.konchak.cnc_halper.presentation.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -27,13 +32,22 @@ fun RoleSelectionScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
+    // Navigate once role is saved and continued
+    LaunchedEffect(state.roleSavedAndContinued) {
+        if (state.roleSavedAndContinued) {
+            navController.navigate(Screen.EquipmentSetup.route) {
+                popUpTo(Screen.RoleSelection.route) { inclusive = true }
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Выбор роли") },
+                title = { Text(stringResource(R.string.role_selection_title)) }, // Use string resource
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Назад")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) // Use string resource
                     }
                 }
             )
@@ -46,13 +60,13 @@ fun RoleSelectionScreen(
                 .padding(24.dp)
         ) {
             Text(
-                text = "Кто вы?",
+                text = stringResource(R.string.who_are_you), // Use string resource
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
             Text(
-                text = "Выберите вашу роль для персонализации функций приложения",
+                text = stringResource(R.string.role_selection_description), // Use string resource
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 32.dp)
@@ -65,53 +79,63 @@ fun RoleSelectionScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 RoleCard(
-                    title = "Оператор станка",
-                    description = "Работа с инструментами, анализ износа, ежедневные операции",
+                    title = stringResource(R.string.role_operator_title),
+                    description = stringResource(R.string.role_operator_description),
                     icon = Icons.Default.PrecisionManufacturing,
                     isSelected = state.selectedRole == UserRole.OPERATOR,
                     onClick = { viewModel.onEvent(RoleSelectionEvent.SelectRole(UserRole.OPERATOR)) }
                 )
 
                 RoleCard(
-                    title = "Технолог",
-                    description = "Настройка режимов, оптимизация процессов, анализ эффективности",
+                    title = stringResource(R.string.role_engineer_title),
+                    description = stringResource(R.string.role_engineer_description),
+                    icon = Icons.Default.Engineering,
+                    isSelected = state.selectedRole == UserRole.ENGINEER,
+                    onClick = { viewModel.onEvent(RoleSelectionEvent.SelectRole(UserRole.ENGINEER)) }
+                )
+
+                RoleCard(
+                    title = stringResource(R.string.role_programmer_title),
+                    description = stringResource(R.string.role_programmer_description),
+                    icon = Icons.Default.Code,
+                    isSelected = state.selectedRole == UserRole.PROGRAMMER,
+                    onClick = { viewModel.onEvent(RoleSelectionEvent.SelectRole(UserRole.PROGRAMMER)) }
+                )
+
+                RoleCard(
+                    title = stringResource(R.string.role_master_title),
+                    description = stringResource(R.string.role_master_description),
+                    icon = Icons.Default.Build,
+                    isSelected = state.selectedRole == UserRole.MASTER,
+                    onClick = { viewModel.onEvent(RoleSelectionEvent.SelectRole(UserRole.MASTER)) }
+                )
+
+                RoleCard(
+                    title = stringResource(R.string.role_technologist_title),
+                    description = stringResource(R.string.role_technologist_description),
                     icon = Icons.Default.Engineering,
                     isSelected = state.selectedRole == UserRole.TECHNOLOGIST,
                     onClick = { viewModel.onEvent(RoleSelectionEvent.SelectRole(UserRole.TECHNOLOGIST)) }
                 )
 
                 RoleCard(
-                    title = "Мастер цеха",
-                    description = "Управление оборудованием, планирование, контроль качества",
+                    title = stringResource(R.string.role_workshop_master_title),
+                    description = stringResource(R.string.role_workshop_master_description),
                     icon = Icons.Default.SupervisorAccount,
                     isSelected = state.selectedRole == UserRole.WORKSHOP_MASTER,
                     onClick = { viewModel.onEvent(RoleSelectionEvent.SelectRole(UserRole.WORKSHOP_MASTER)) }
                 )
             }
 
-            Spacer(modifier = Modifier.weight(1f))
-
-            Button(
-                onClick = {
-                    viewModel.onEvent(RoleSelectionEvent.Continue)
-                    navController.navigate(Screen.EquipmentSetup.route)
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                enabled = state.selectedRole != null && !state.isLoading
-            ) {
-                if (state.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                } else {
-                    Text(
-                        text = "Продолжить",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                }
+            // Removed the "Continue" button
+            if (state.isLoading) {
+                Spacer(modifier = Modifier.height(16.dp))
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .size(20.dp)
+                        .align(Alignment.CenterHorizontally),
+                    color = MaterialTheme.colorScheme.primary
+                )
             }
         }
     }

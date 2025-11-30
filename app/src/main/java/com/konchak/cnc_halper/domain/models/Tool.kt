@@ -7,7 +7,7 @@ package com.konchak.cnc_halper.domain.models
 data class Tool(
     val id: String = "", // Firebase document ID или локальный ID
     val name: String = "",
-    val type: String = "", // "end_mill", "drill", "tap", "reamer", "tool_holder"
+    val type: ToolType = ToolType.OTHER, // Changed to ToolType enum
     val diameter: Float = 0f, // мм
     val length: Float = 0f, // мм
     val material: String = "", // "HSS", "Carbide", "Cobalt", "PCD"
@@ -27,7 +27,7 @@ data class Tool(
     constructor() : this(
         id = "",
         name = "",
-        type = "",
+        type = ToolType.OTHER, // Changed to ToolType enum
         diameter = 0f,
         length = 0f,
         material = "",

@@ -27,9 +27,6 @@ fun MachineListScreen(
 ) {
     val machines by viewModel.machines.collectAsState()
     
-    // Временные данные для демонстрации анимаций
-    val workingMachines = remember { mutableStateListOf("machine_1", "machine_3") }
-
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -63,7 +60,7 @@ fun MachineListScreen(
             items(machines, key = { it.id }) { machine ->
                 MachineItem(
                     machine = machine,
-                    isWorking = workingMachines.contains(machine.id),
+                    isWorking = machine.isWorking, // Assuming Machine model has isWorking property
                     onClick = { 
                         navController.navigate(
                             "machine_detail/${machine.id}"

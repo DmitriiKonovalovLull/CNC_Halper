@@ -5,5 +5,5 @@ data class ChatMessage(
     val message: String,
     val isUser: Boolean,
     val timestamp: Long,
-    val messageType: MessageType = MessageType.TEXT
+    val messageType: MessageType = if (isUser) MessageType.USER_MESSAGE else MessageType.TEXT
 )

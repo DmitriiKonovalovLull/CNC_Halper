@@ -5,12 +5,14 @@ import com.konchak.cnc_halper.data.repositories.AIRepositoryImpl
 import com.konchak.cnc_halper.data.repositories.ChatRepositoryImpl
 import com.konchak.cnc_halper.data.repositories.MachineRepositoryImpl
 import com.konchak.cnc_halper.data.repositories.OfflineRepositoryImpl
+import com.konchak.cnc_halper.data.repositories.OnboardingRepositoryImpl
 import com.konchak.cnc_halper.data.repositories.OperatorRepositoryImpl
 import com.konchak.cnc_halper.data.repositories.ToolRepositoryImpl
 import com.konchak.cnc_halper.domain.repositories.AIRepository
 import com.konchak.cnc_halper.domain.repositories.ChatRepository
 import com.konchak.cnc_halper.domain.repositories.MachineRepository
 import com.konchak.cnc_halper.domain.repositories.OfflineRepository
+import com.konchak.cnc_halper.domain.repositories.OnboardingRepository
 import com.konchak.cnc_halper.domain.repositories.OperatorRepository
 import com.konchak.cnc_halper.domain.repositories.ToolRepository
 import dagger.Binds
@@ -59,4 +61,10 @@ abstract class RepositoryModule {
     abstract fun bindOfflineRepository(
         repositoryImpl: OfflineRepositoryImpl
     ): OfflineRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindOnboardingRepository(
+        repositoryImpl: OnboardingRepositoryImpl
+    ): OnboardingRepository
 }

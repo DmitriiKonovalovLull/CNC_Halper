@@ -57,7 +57,6 @@ fun ToolScannerScreen(
                 state.hasCameraPermission -> {
                     CameraPreviewSection(
                         state = state,
-                        onEvent = viewModel::onEvent,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -109,8 +108,7 @@ fun ToolScannerScreen(
 @Composable
 fun CameraPreviewSection(
     state: ToolScannerState,
-    @Suppress("unused") onEvent: (ToolScannerEvent) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier // Removed onEvent parameter
 ) {
     Box(
         modifier = modifier,

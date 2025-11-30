@@ -167,7 +167,7 @@ private fun ToolHeaderSection(tool: Tool) {
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(tool.name, fontWeight = FontWeight.Bold, fontSize = 24.sp)
-                Text(tool.type, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 16.sp)
+                Text(tool.type.displayName, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 16.sp) // Use displayName
                 Text("Размер: ${tool.getSizeString()}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
                 Text("ID: ${tool.id}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
             }

@@ -1,11 +1,18 @@
-// app/src/main/java/com/konchak/cnc_halper/data/local/database/entities/ChatEntity.kt
 package com.konchak.cnc_halper.data.local.database.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.ColumnInfo
+import androidx.room.Index
 
-@Entity(tableName = "chat_responses")
+@Entity(
+    tableName = "chat_responses",
+    indices = [
+        Index(value = ["operator_id"]),
+        Index(value = ["operator_id", "date"]),
+        Index(value = ["date"])
+    ]
+)
 data class ChatEntity(
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
@@ -15,7 +22,7 @@ data class ChatEntity(
     val operatorId: Long,
 
     @ColumnInfo(name = "date")
-    val date: Long, // YYYY-MM-DD
+    val date: Long,
 
     @ColumnInfo(name = "question_1")
     val question1: String,

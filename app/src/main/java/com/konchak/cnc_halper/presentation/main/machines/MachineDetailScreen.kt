@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack // ✅ ИСПРАВЛЕНО
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -40,13 +40,15 @@ fun MachineDetailScreen(
                 title = { Text(state.machine?.name ?: "Детали станка") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Назад") // ✅ ИСПРАВЛЕНО
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Назад")
                     }
                 },
                 actions = {
                     IconButton(
                         onClick = {
-                            // TODO: Редактирование станка
+                            state.machine?.id?.let { id ->
+                                navController.navigate("edit_machine/$id")
+                            }
                         },
                         enabled = state.machine != null
                     ) {
@@ -91,7 +93,17 @@ fun MachineDetailScreen(
             else -> {
                 MachineDetailContent(
                     machine = state.machine!!,
-                    modifier = Modifier.padding(paddingValues)
+                    modifier = Modifier.padding(paddingValues),
+                    navController = navController, // Pass navController
+                    onManageToolsClick = {
+                        navController.navigate("tool_list_for_machine/${state.machine!!.id}")
+                    },
+                    onStatsClick = {
+                        navController.navigate("machine_stats/${state.machine!!.id}")
+                    },
+                    onSettingsClick = {
+                        navController.navigate("machine_settings/${state.machine!!.id}")
+                    }
                 )
             }
         }
@@ -101,7 +113,11 @@ fun MachineDetailScreen(
 @Composable
 fun MachineDetailContent(
     machine: Machine,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    navController: NavController, // Removed @Suppress("unused")
+    onManageToolsClick: () -> Unit,
+    onStatsClick: () -> Unit,
+    onSettingsClick: () -> Unit
 ) {
     Column(
         modifier = modifier
@@ -153,7 +169,7 @@ fun MachineDetailContent(
                 )
 
                 InfoRow("Модель", machine.model)
-                InfoRow("Тип", machine.type)
+                InfoRow("Тип", machine.type.displayName) // Display the enum's display name
                 if (machine.serialNumber.isNotBlank()) {
                     InfoRow("Серийный номер", machine.serialNumber)
                 }
@@ -193,21 +209,21 @@ fun MachineDetailContent(
                 )
 
                 Button(
-                    onClick = { /* TODO: Инструменты станка */ },
+                    onClick = onManageToolsClick,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("🔧 Управление инструментами")
                 }
 
                 OutlinedButton(
-                    onClick = { /* TODO: Статистика */ },
+                    onClick = onStatsClick,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("📊 Просмотр статистики")
                 }
 
                 OutlinedButton(
-                    onClick = { /* TODO: Настройки */ },
+                    onClick = onSettingsClick,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("⚙️ Настройки станка")

@@ -1,8 +1,8 @@
 package com.konchak.cnc_halper.core.ai
 
-import com.konchak.cnc_halper.domain.models.ai.MiniAIModel
 import com.konchak.cnc_halper.domain.models.AIResponse
 import com.konchak.cnc_halper.domain.models.ai.AIModelType
+import com.konchak.cnc_halper.domain.models.ai.MiniAIModel // <-- Add this import
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -33,20 +33,16 @@ class MiniAIEngine @Inject constructor() {
             val (answer, confidence) = processWithMiniAI(query)
             val processingTime = System.currentTimeMillis() - startTime
 
-            AIResponse(
+            AIResponse.Success( // ✅ Исправлено: используем Success вместо прямого вызова
                 answer = answer,
                 confidence = confidence,
                 modelUsed = AIModelType.MiniTFLite,
                 processingTime = processingTime,
                 requiresSync = true
             )
-        } catch (_: Exception) {
-            AIResponse(
-                answer = "Мини-ИИ временно недоступен. Пожалуйста, проверьте подключение к интернету.",
-                confidence = 0.0f,
-                modelUsed = AIModelType.MiniTFLite,
-                processingTime = System.currentTimeMillis() - startTime,
-                requiresSync = false
+        } catch (e: Exception) {
+            AIResponse.Error( // ✅ Исправлено: используем Error вместо прямого вызова
+                message = "Мини-ИИ временно недоступен. Пожалуйста, проверьте подключение к интернету."
             )
         }
     }
@@ -71,10 +67,10 @@ class MiniAIEngine @Inject constructor() {
             id = "mini_ai_v1",
             name = "Mini AI v1",
             version = "1.1.0",
-            path = "models/mini_ai.tflite",
+            filePath = "models/mini_ai.tflite", // ✅ Исправлено: path → filePath
             accuracy = 0.85f,
             lastUpdated = System.currentTimeMillis(),
-            modelSize = (2.1 * 1024 * 1024).toLong()
+            sizeBytes = (2.1 * 1024 * 1024).toLong() // ✅ Исправлено: modelSize → sizeBytes
         )
     }
 

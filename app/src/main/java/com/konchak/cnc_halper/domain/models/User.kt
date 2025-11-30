@@ -11,6 +11,12 @@ data class User(
     val createdAt: Long = System.currentTimeMillis()
 )
 
-enum class UserRole {
-    OPERATOR, TECHNOLOGIST, WORKSHOP_MASTER, ADMIN
+enum class UserRole(val russianName: String) {
+    OPERATOR("Оператор"),
+    ENGINEER("Инженер"),
+    PROGRAMMER("Программист"),
+    MASTER("Мастер"),
+    TECHNOLOGIST("Технолог"),
+    WORKSHOP_MASTER("Мастер цеха"),
+    ADMIN("Администратор")
 }

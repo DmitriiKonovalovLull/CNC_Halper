@@ -9,6 +9,7 @@ import com.konchak.cnc_halper.domain.models.ManufacturerTool
 import com.konchak.cnc_halper.domain.models.Tool
 import com.konchak.cnc_halper.domain.models.ToolAnalysisResult
 import com.konchak.cnc_halper.domain.models.ToolSpecifications
+import com.konchak.cnc_halper.domain.models.ToolType
 import com.konchak.cnc_halper.domain.repositories.ToolRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -80,7 +81,7 @@ class ToolRepositoryImpl @Inject constructor(
         val scannedTool = Tool(
             id = "scanned_${System.currentTimeMillis()}",
             name = "Сканированная фреза",
-            type = "Концевая",
+            type = ToolType.END_MILL, // Changed to ToolType enum
             diameter = 10f,
             length = 50f,
             material = "HSS",
@@ -97,7 +98,7 @@ class ToolRepositoryImpl @Inject constructor(
         saveTool(
             operatorId = scannedTool.operatorId.toLong(),
             name = scannedTool.name,
-            type = scannedTool.type,
+            type = scannedTool.type.displayName, // Changed to displayName
             size = "${scannedTool.diameter}x${scannedTool.length}",
             photoPath = scannedTool.imageUrl
         )

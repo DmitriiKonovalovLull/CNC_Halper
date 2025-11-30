@@ -1,13 +1,14 @@
-// app/src/main/java/com/konchak/cnc_halper/core/di/DatabaseModule.kt
 package com.konchak.cnc_halper.core.di
 
 import android.content.Context
+import androidx.room.Room
 import com.konchak.cnc_halper.data.local.database.AppDatabase
 import com.konchak.cnc_halper.data.local.database.dao.ChatDao
 import com.konchak.cnc_halper.data.local.database.dao.MachineDao
 import com.konchak.cnc_halper.data.local.database.dao.OfflineCacheDao
 import com.konchak.cnc_halper.data.local.database.dao.OperatorDao
 import com.konchak.cnc_halper.data.local.database.dao.ToolDao
+import com.konchak.cnc_halper.data.local.database.dao.WorkDao // Added WorkDao import
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -22,7 +23,12 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
-        return AppDatabase.getInstance(context)
+        return Room.databaseBuilder(
+            context,
+            AppDatabase::class.java,
+            "cnc_database"
+        ).fallbackToDestructiveMigration()
+            .build()
     }
 
     @Provides
@@ -48,5 +54,10 @@ object DatabaseModule {
     @Provides
     fun provideOfflineCacheDao(appDatabase: AppDatabase): OfflineCacheDao {
         return appDatabase.offlineCacheDao()
+    }
+
+    @Provides
+    fun provideWorkDao(appDatabase: AppDatabase): WorkDao { // Moved from di/DatabaseModule.kt
+        return appDatabase.workDao()
     }
 }

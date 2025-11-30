@@ -1,6 +1,7 @@
 // data/repositories/MachineRepositoryImpl.kt
 package com.konchak.cnc_halper.data.repositories
 
+import android.util.Log // Import Log
 import com.konchak.cnc_halper.data.local.database.dao.MachineDao
 import com.konchak.cnc_halper.data.local.database.mappers.MachineMapper
 import com.konchak.cnc_halper.domain.models.Machine
@@ -13,29 +14,40 @@ class MachineRepositoryImpl @Inject constructor(
     private val machineDao: MachineDao
 ) : MachineRepository {
 
+    private val TAG = "MachineRepositoryImpl"
+
     override fun getMachines(): Flow<List<Machine>> {
         return machineDao.getMachines().map { entities ->
-            entities.map { MachineMapper.toDomain(it) }
+            entities.map {
+                val domainMachine = MachineMapper.toDomain(it)
+                Log.d(TAG, "getMachines: Mapped entity to domain machine with ID: ${domainMachine.id}")
+                domainMachine
+            }
         }
     }
 
     override suspend fun getMachineById(id: String): Machine? {
-        return machineDao.getMachineById(id)?.let { MachineMapper.toDomain(it) }
+        val machine = machineDao.getMachineById(id)?.let { MachineMapper.toDomain(it) }
+        Log.d(TAG, "getMachineById: Retrieved machine with ID: $id -> ${machine?.id}")
+        return machine
     }
 
     override suspend fun addMachine(machine: Machine) {
         val entity = MachineMapper.toEntity(machine)
         machineDao.insertMachine(entity)
+        Log.d(TAG, "addMachine: Added machine with ID: ${machine.id}")
         // TODO: Add to offline cache for sync
     }
 
     override suspend fun updateMachine(machine: Machine) {
         val entity = MachineMapper.toEntity(machine)
         machineDao.updateMachine(entity)
+        Log.d(TAG, "updateMachine: Updated machine with ID: ${machine.id}")
     }
 
     override suspend fun deleteMachine(id: String) {
         machineDao.deleteMachine(id)
+        Log.d(TAG, "deleteMachine: Deleted machine with ID: $id")
     }
 
     override suspend fun syncMachines(): Boolean {

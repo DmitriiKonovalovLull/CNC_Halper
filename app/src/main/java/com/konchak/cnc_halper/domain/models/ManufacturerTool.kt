@@ -22,7 +22,7 @@ data class ManufacturerTool(
     fun toDomainTool(operatorId: String): Tool {
         return Tool(
             name = this.name,
-            type = this.type,
+            type = ToolType.fromDisplayName(this.type), // Convert String to ToolType enum
             diameter = this.specifications.diameter ?: 0f,
             length = this.specifications.length ?: 0f,
             material = this.specifications.material,

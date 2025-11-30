@@ -78,6 +78,10 @@ android {
             excludes += "META-INF/NOTICE.txt"
             excludes += "META-INF/INDEX.LIST"
         }
+        // Добавляем исключение для нативных библиотек x86_64
+        jniLibs {
+            excludes += listOf("**/x86_64/**")
+        }
     }
 }
 

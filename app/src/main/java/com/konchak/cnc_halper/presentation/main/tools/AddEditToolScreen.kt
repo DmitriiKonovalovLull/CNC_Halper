@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.konchak.cnc_halper.domain.models.ManufacturerTool
+import com.konchak.cnc_halper.domain.models.ToolType
 import com.konchak.cnc_halper.presentation.main.tools.components.WearLevelSlider
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,6 +77,7 @@ fun AddEditToolScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ToolForm(
     state: AddEditToolState,
@@ -117,17 +119,38 @@ fun ToolForm(
                         )
                     )
 
-                    OutlinedTextField(
-                        value = state.type,
-                        onValueChange = { onEvent(AddEditToolEvent.TypeChanged(it)) },
-                        label = { Text("Тип инструмента") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(
-                            onDone = { focusManager.clearFocus() }
+                    var expanded by remember { mutableStateOf(false) }
+                    ExposedDropdownMenuBox(
+                        expanded = expanded,
+                        onExpandedChange = { expanded = !expanded },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = state.type.displayName,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Тип инструмента") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor(),
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
                         )
-                    )
+                        ExposedDropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false }
+                        ) {
+                            ToolType.values().forEach { toolType ->
+                                DropdownMenuItem(
+                                    text = { Text(toolType.displayName) },
+                                    onClick = {
+                                        onEvent(AddEditToolEvent.TypeChanged(toolType))
+                                        expanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
                 }
             }
 

@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.konchak.cnc_halper.domain.models.ManufacturerTool
 import com.konchak.cnc_halper.domain.models.Tool
+import com.konchak.cnc_halper.domain.models.ToolType
 import com.konchak.cnc_halper.domain.repositories.ToolRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -107,7 +108,7 @@ class AddEditToolViewModel @Inject constructor(
     private fun fillFormFromManufacturerTool(manufacturerTool: ManufacturerTool) {
         _state.value = _state.value.copy(
             name = manufacturerTool.name,
-            type = manufacturerTool.type,
+            type = ToolType.fromDisplayName(manufacturerTool.type), // Convert String to ToolType enum
             diameter = manufacturerTool.specifications.diameter.toString(),
             length = manufacturerTool.specifications.length.toString(),
             material = manufacturerTool.specifications.material,
@@ -166,7 +167,7 @@ class AddEditToolViewModel @Inject constructor(
     }
 
     private fun validateForm() {
-        val isValid = _state.value.name.isNotBlank() && _state.value.type.isNotBlank()
+        val isValid = _state.value.name.isNotBlank() && _state.value.type != ToolType.OTHER
         _state.value = _state.value.copy(isFormValid = isValid)
     }
 
@@ -178,7 +179,7 @@ class AddEditToolViewModel @Inject constructor(
 // ✅ ОБНОВЛЯЕМ СОСТОЯНИЕ ДЛЯ ПОИСКА
 data class AddEditToolState(
     val name: String = "",
-    val type: String = "",
+    val type: ToolType = ToolType.OTHER, // Changed to ToolType enum
     val diameter: String = "",
     val length: String = "",
     val material: String = "Твердый сплав",
@@ -192,7 +193,7 @@ data class AddEditToolState(
 // ✅ ДОБАВЛЯЕМ СОБЫТИЯ ДЛЯ ПОИСКА
 sealed class AddEditToolEvent {
     data class NameChanged(val name: String) : AddEditToolEvent()
-    data class TypeChanged(val type: String) : AddEditToolEvent()
+    data class TypeChanged(val type: ToolType) : AddEditToolEvent() // Changed to ToolType enum
     data class DiameterChanged(val diameter: String) : AddEditToolEvent()
     data class LengthChanged(val length: String) : AddEditToolEvent()
     data class MaterialChanged(val material: String) : AddEditToolEvent()

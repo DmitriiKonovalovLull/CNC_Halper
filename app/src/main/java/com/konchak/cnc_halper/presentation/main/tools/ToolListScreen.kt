@@ -10,14 +10,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import com.konchak.cnc_halper.domain.models.Tool
 import com.konchak.cnc_halper.presentation.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -123,65 +121,6 @@ fun ToolListScreen(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .padding(16.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun ToolItem(
-    tool: Tool,
-    onClick: () -> Unit
-) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // ✅ ИСПРАВЛЕНО: используем Surface вместо Box с background
-            Surface(
-                modifier = Modifier.size(50.dp),
-                color = when (tool.wearLevel) {
-                    1 -> Color.Green
-                    2 -> Color.Yellow
-                    3 -> Color(0xFFFFA500)
-                    4 -> Color.Red
-                    else -> Color.Gray
-                },
-                shape = MaterialTheme.shapes.small
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        tool.name.take(2).uppercase(),
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    tool.name,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
-                Text(
-                    "${tool.type} • ${tool.getSizeString()}",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 14.sp
-                )
-                Text(
-                    "Износ: ${tool.getWearStatus()}",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 12.sp
                 )
             }
         }

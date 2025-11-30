@@ -1,7 +1,7 @@
 package com.konchak.cnc_halper.core.ai
 
 import android.content.Context
-import com.konchak.cnc_halper.domain.models.ai.MiniAIModel
+import com.konchak.cnc_halper.domain.models.ai.MiniAIModel // <-- Add this import
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -43,14 +43,14 @@ class ModelLoader @Inject constructor(
     }
 
     @Suppress("unused")
-    suspend fun optimizeModelForDevice(@Suppress("unused") model: MiniAIModel): MiniAIModel {
+    suspend fun optimizeModelForDevice(model: MiniAIModel): MiniAIModel { // Removed @Suppress("unused") from parameter
         return try {
             // Имитация оптимизации модели под устройство
             kotlinx.coroutines.delay(1000)
 
             model.copy(
                 accuracy = model.accuracy + 0.03f, // +3% после оптимизации
-                modelSize = (model.modelSize * 0.9).toLong() // -10% размера
+                sizeBytes = (model.sizeBytes * 0.9).toLong() // -10% размера
             )
         } catch (_: Exception) {
             model
@@ -80,7 +80,7 @@ class ModelLoader @Inject constructor(
     @Suppress("unused")
     suspend fun validateModel(model: MiniAIModel): Boolean {
         return try {
-            loadModel(model.path) && model.modelSize > 0
+            loadModel(model.filePath) && model.sizeBytes > 0
         } catch (_: Exception) {
             false
         }

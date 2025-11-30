@@ -2,44 +2,51 @@ package com.konchak.cnc_halper.presentation.main.chat
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.konchak.cnc_halper.domain.models.AIResponse
 import com.konchak.cnc_halper.domain.models.ChatMessage
 import com.konchak.cnc_halper.domain.models.MessageType
+import com.konchak.cnc_halper.domain.repositories.AIRepository
 import com.konchak.cnc_halper.domain.repositories.ChatRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
-    private val chatRepository: ChatRepository
+    private val chatRepository: ChatRepository,
+    private val aiRepository: AIRepository
 ) : ViewModel() {
 
     private val _chatState = MutableStateFlow(ChatState())
     val chatState: StateFlow<ChatState> = _chatState.asStateFlow()
 
-    private val currentOperatorId = 1L // ID текущего оператора
-    private val dailyQuestions = listOf(
-        "Какие станки сегодня в работе?",
-        "Есть ли проблемы с инструментом?",
-        "Нужна ли помощь с настройкой?"
-    )
-
-    private var currentQuestionIndex = 0
-    private val userAnswers = mutableListOf<String>()
+    private val currentOperatorId = 1L
 
     init {
-        checkDailyQuestions()
         loadChatHistory()
+    }
+
+    fun onEvent(event: ChatEvent) {
+        when (event) {
+            is ChatEvent.SendMessage -> sendMessage(event.message)
+            ChatEvent.ClearChatHistory -> clearChatHistory()
+            ChatEvent.ClearError -> clearError()
+            ChatEvent.RetryLoadHistory -> loadChatHistory()
+        }
     }
 
     fun sendMessage(message: String) {
         if (message.isBlank()) return
 
         viewModelScope.launch {
-            // Добавляем сообщение пользователя
+            _chatState.update { it.copy(isLoading = true, error = null) }
+
             val userMessage = ChatMessage(
                 id = generateId(),
                 message = message,
@@ -47,139 +54,112 @@ class ChatViewModel @Inject constructor(
                 timestamp = System.currentTimeMillis()
             )
 
-            val currentMessages = _chatState.value.messages + userMessage
-            _chatState.value = _chatState.value.copy(messages = currentMessages)
+            _chatState.update { it.copy(messages = it.messages + userMessage) }
 
-            // Сохраняем ответ пользователя
-            userAnswers.add(message)
+            val aiResponse = withContext(Dispatchers.IO) {
+                try {
+                    aiRepository.processWithHybridAI(message)
+                } catch (e: Exception) {
+                    AIResponse.Error("Ошибка: ${e.message ?: "Неизвестная ошибка"}")
+                }
+            }
 
-            // Проверяем, нужно ли задавать следующий вопрос
-            if (currentQuestionIndex < dailyQuestions.size - 1) {
-                currentQuestionIndex++
-                showNextQuestion()
-            } else {
-                // Все вопросы отвечены - сохраняем в базу
-                saveDailyResponses()
-                _chatState.value = _chatState.value.copy(
-                    hasAnsweredToday = true,
-                    dailyQuestions = emptyList()
+            val aiMessage = when (aiResponse) {
+                is AIResponse.Success -> ChatMessage(
+                    id = generateId(),
+                    message = aiResponse.answer,
+                    isUser = false,
+                    timestamp = System.currentTimeMillis(),
+                    messageType = MessageType.TEXT
                 )
+                is AIResponse.Error -> ChatMessage(
+                    id = generateId(),
+                    message = aiResponse.message,
+                    isUser = false,
+                    timestamp = System.currentTimeMillis(),
+                    messageType = MessageType.ERROR
+                )
+            }
 
-                // Показываем благодарность
-                showThankYouMessage()
+            _chatState.update {
+                it.copy(
+                    messages = it.messages + aiMessage,
+                    isLoading = false
+                )
+            }
+
+            saveChatToHistory(userMessage, aiMessage)
+        }
+    }
+
+    fun clearChatHistory() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                chatRepository.clearChatHistory(currentOperatorId)
+                _chatState.update { it.copy(messages = emptyList()) }
+
+                val systemMessage = ChatMessage(
+                    id = generateId(),
+                    message = "История чата очищена",
+                    isUser = false,
+                    timestamp = System.currentTimeMillis(),
+                    messageType = MessageType.SYSTEM_MESSAGE
+                )
+                _chatState.update { it.copy(messages = it.messages + systemMessage) }
+
+            } catch (e: Exception) {
+                _chatState.update { it.copy(error = "Ошибка очистки: ${e.message}") }
             }
         }
     }
 
-    fun startDailyQuestions() {
-        currentQuestionIndex = 0
-        userAnswers.clear()
-        _chatState.value = _chatState.value.copy(
-            dailyQuestions = dailyQuestions,
-            hasAnsweredToday = false
-        )
-        showNextQuestion()
+    fun clearError() {
+        _chatState.update { it.copy(error = null) }
     }
 
-    private fun showNextQuestion() {
-        if (currentQuestionIndex < dailyQuestions.size) {
-            val questionMessage = ChatMessage(
-                id = generateId(),
-                message = dailyQuestions[currentQuestionIndex],
-                isUser = false,
-                timestamp = System.currentTimeMillis(),
-                messageType = MessageType.DAILY_QUESTION
-            )
-
-            _chatState.value = _chatState.value.copy(
-                messages = _chatState.value.messages + questionMessage
-            )
-        }
-    }
-
-    private fun showThankYouMessage() {
-        val thankYouMessage = ChatMessage(
-            id = generateId(),
-            message = "Спасибо за ответы! Данные сохранены.",
-            isUser = false,
-            timestamp = System.currentTimeMillis(),
-            messageType = MessageType.SYSTEM_MESSAGE
-        )
-
-        _chatState.value = _chatState.value.copy(
-            messages = _chatState.value.messages + thankYouMessage
-        )
-    }
-
-    private suspend fun saveDailyResponses() {
-        if (userAnswers.size == dailyQuestions.size) {
-            chatRepository.saveChatResponses(
-                operatorId = currentOperatorId,
-                questions = dailyQuestions,
-                answers = userAnswers
-            )
-        }
-    }
-
-    private fun checkDailyQuestions() {
-        viewModelScope.launch {
-            val hasAnswered = chatRepository.hasOperatorAnsweredToday(currentOperatorId)
-            _chatState.value = _chatState.value.copy(hasAnsweredToday = hasAnswered)
-
-            if (!hasAnswered) {
-                // Автоматически начинаем ежедневные вопросы
-                startDailyQuestions()
+    private fun saveChatToHistory(userMessage: ChatMessage, aiMessage: ChatMessage) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                chatRepository.saveChatMessages(
+                    operatorId = currentOperatorId,
+                    userMessage = userMessage,
+                    aiMessage = aiMessage
+                )
+            } catch (e: Exception) {
+                println("Ошибка сохранения истории: ${e.message}")
             }
         }
     }
 
     private fun loadChatHistory() {
-        viewModelScope.launch {
-            chatRepository.getChatHistory(currentOperatorId).collect { chatEntities ->
-                val messages = chatEntities.flatMap { entity ->
-                    listOf(
-                        ChatMessage(
-                            id = "q1_${entity.id}",
-                            message = entity.question1,
-                            isUser = false,
-                            timestamp = entity.date,
-                            messageType = MessageType.DAILY_QUESTION
-                        ),
-                        ChatMessage(
-                            id = "a1_${entity.id}",
-                            message = entity.answer1,
-                            isUser = true,
-                            timestamp = entity.date
-                        ),
-                        ChatMessage(
-                            id = "q2_${entity.id}",
-                            message = entity.question2,
-                            isUser = false,
-                            timestamp = entity.date,
-                            messageType = MessageType.DAILY_QUESTION
-                        ),
-                        ChatMessage(
-                            id = "a2_${entity.id}",
-                            message = entity.answer2,
-                            isUser = true,
-                            timestamp = entity.date
-                        ),
-                        ChatMessage(
-                            id = "q3_${entity.id}",
-                            message = entity.question3,
-                            isUser = false,
-                            timestamp = entity.date,
-                            messageType = MessageType.DAILY_QUESTION
-                        ),
-                        ChatMessage(
-                            id = "a3_${entity.id}",
-                            message = entity.answer3,
-                            isUser = true,
-                            timestamp = entity.date
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                chatRepository.getRecentChatHistory(currentOperatorId, 100).collect { chatEntities ->
+                    val messages = chatEntities.flatMap { entity ->
+                        listOf(
+                            ChatMessage(
+                                id = "q_${entity.id}",
+                                message = entity.question1,
+                                isUser = true,
+                                timestamp = entity.date
+                            ),
+                            ChatMessage(
+                                id = "a_${entity.id}",
+                                message = entity.answer1,
+                                isUser = false,
+                                timestamp = entity.date
+                            )
                         )
+                    }
+                    _chatState.update { it.copy(messages = messages, isLoading = false) }
+                }
+            } catch (e: Exception) {
+                _chatState.update {
+                    it.copy(
+                        error = "Ошибка загрузки истории: ${e.message}",
+                        isLoading = false
                     )
                 }
-                _chatState.value = _chatState.value.copy(messages = messages)
             }
         }
     }
@@ -189,7 +169,13 @@ class ChatViewModel @Inject constructor(
 
 data class ChatState(
     val messages: List<ChatMessage> = emptyList(),
-    val dailyQuestions: List<String> = emptyList(),
-    val hasAnsweredToday: Boolean = false,
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val error: String? = null
 )
+
+sealed class ChatEvent {
+    data class SendMessage(val message: String) : ChatEvent()
+    object ClearChatHistory : ChatEvent()
+    object ClearError : ChatEvent()
+    object RetryLoadHistory : ChatEvent()
+}

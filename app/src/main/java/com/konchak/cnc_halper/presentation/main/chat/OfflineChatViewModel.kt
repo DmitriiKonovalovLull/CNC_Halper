@@ -1,126 +1,225 @@
 package com.konchak.cnc_halper.presentation.main.chat
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.konchak.cnc_halper.core.ai.MiniAIEngine
-import com.konchak.cnc_halper.core.network.NetworkUtils
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.konchak.cnc_halper.domain.models.ai.MiniAIModel
-import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import javax.inject.Inject
+import java.text.SimpleDateFormat
+import java.util.*
 
-@HiltViewModel
-class OfflineChatViewModel @Inject constructor(
-    private val miniAIEngine: MiniAIEngine,
-    private val networkUtils: NetworkUtils
-) : ViewModel() {
+@Suppress("unused")
+@Composable
+fun OfflineChatMode(
+    viewModel: OfflineChatViewModel = hiltViewModel()
+) {
+    val state by viewModel.state.collectAsState()
 
-    private val _state = MutableStateFlow(OfflineChatState())
-    val state: StateFlow<OfflineChatState> = _state
-
-    init {
-        loadModelInfo()
-        checkSyncCapability()
-    }
-
-    fun onEvent(event: OfflineChatEvent) {
-        when (event) {
-            OfflineChatEvent.SyncModels -> syncModels()
-            OfflineChatEvent.RefreshInfo -> loadModelInfo()
-        }
-    }
-
-    private fun loadModelInfo() {
-        viewModelScope.launch {
-            try {
-                val modelInfo = miniAIEngine.getModelInfo()
-                _state.update { state ->
-                    state.copy(
-                        modelInfo = modelInfo,
-                        capabilities = getCapabilities(),
-                        limitations = getLimitations()
-                    )
-                }
-            } catch (e: Exception) {
-                _state.update { state ->
-                    state.copy(
-                        error = "Ошибка загрузки информации о модели: ${e.message}"
-                    )
-                }
-            }
-        }
-    }
-
-    private fun checkSyncCapability() {
-        _state.update { state ->
-            state.copy(
-                canSync = networkUtils.isConnected() && networkUtils.isWifiConnected()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Offline Mode Header
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
             )
-        }
-    }
-
-    private fun syncModels() {
-        _state.update { it.copy(isSyncing = true) }
-
-        viewModelScope.launch {
-            try {
-                // Имитация синхронизации моделей
-                kotlinx.coroutines.delay(3000)
-
-                _state.update { state ->
-                    state.copy(
-                        isSyncing = false,
-                        modelInfo = state.modelInfo.copy(
-                            version = "1.2.0",
-                            accuracy = 0.88f,
-                            lastUpdated = System.currentTimeMillis()
-                        )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "📶", // Emoji instead of WifiOff icon
+                    style = MaterialTheme.typography.headlineMedium
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = "Offline Mode",
+                        style = MaterialTheme.typography.titleMedium
                     )
-                }
-            } catch (e: Exception) {
-                _state.update { state ->
-                    state.copy(
-                        isSyncing = false,
-                        error = "Ошибка синхронизации: ${e.message}"
+                    Text(
+                        text = "Using on-device Mini-AI",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
         }
-    }
 
-    private fun getCapabilities(): List<String> {
-        return listOf(
-            "Базовые рекомендации по режимам резания",
-            "Анализ стандартных материалов (сталь, алюминий)",
-            "Расчет параметров для常见 инструментов",
-            "Определение степени износа инструмента",
-            "Работа без интернет-соединения"
+        // Model Information
+        ModelInfoCard(
+            modelInfo = state.modelInfo,
+            modifier = Modifier.fillMaxWidth()
         )
-    }
 
-    private fun getLimitations(): List<String> {
-        return listOf(
-            "Точность на 10-15% ниже облачной версии",
-            "Ограниченный набор материалов и инструментов",
-            "Нет доступа к актуальным данным сообщества",
-            "Не поддерживаются сложные расчеты и симуляции"
+        // Mini-AI Capabilities
+        CapabilitiesList(
+            capabilities = state.capabilities,
+            modifier = Modifier.fillMaxWidth()
         )
+
+        // Limitations
+        LimitationsCard(
+            limitations = state.limitations,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        // Sync Button
+        if (state.canSync) {
+            Button(
+                onClick = { viewModel.onEvent(OfflineChatEvent.SyncModels) },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !state.isSyncing
+            ) {
+                if (state.isSyncing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Text("Sync AI Models")
+                }
+            }
+        }
     }
 }
 
-data class OfflineChatState(
-    val modelInfo: MiniAIModel = MiniAIModel("", "", "", "", 0f, 0L, 0L),
-    val capabilities: List<String> = emptyList(),
-    val limitations: List<String> = emptyList(),
-    val canSync: Boolean = false,
-    val isSyncing: Boolean = false,
-    val error: String? = null
-)
+@Composable
+fun ModelInfoCard(
+    modelInfo: MiniAIModel,
+    modifier: Modifier = Modifier
+) {
+    Card(modifier = modifier) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "🤖 Mini-AI Model", // Emoji for the title
+                style = MaterialTheme.typography.titleMedium
+            )
 
-sealed class OfflineChatEvent {
-    object SyncModels : OfflineChatEvent()
-    object RefreshInfo : OfflineChatEvent()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Version:", style = MaterialTheme.typography.bodyMedium)
+                Text(modelInfo.version, style = MaterialTheme.typography.bodyMedium)
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Size:", style = MaterialTheme.typography.bodyMedium)
+                Text(String.format(Locale.getDefault(), "%.2f MB", modelInfo.sizeBytes / (1024f * 1024f)), style = MaterialTheme.typography.bodyMedium)
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Accuracy:", style = MaterialTheme.typography.bodyMedium)
+                Text(String.format(Locale.getDefault(), "%.2f%%", modelInfo.accuracy * 100), style = MaterialTheme.typography.bodyMedium)
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Updated:", style = MaterialTheme.typography.bodyMedium)
+                Text(SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault()).format(Date(modelInfo.lastUpdated)), style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+    }
+}
+
+@Composable
+fun CapabilitiesList(
+    capabilities: List<String>,
+    modifier: Modifier = Modifier
+) {
+    Card(modifier = modifier) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "✅ Mini-AI Capabilities", // Emoji for the title
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            capabilities.forEach { capability ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "✓", // Symbol instead of an icon
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = capability,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun LimitationsCard(
+    limitations: List<String>,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        ),
+        modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "⚠️ Offline Mode Limitations", // Emoji for the title
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+
+            limitations.forEach { limitation ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "•", // Bullet point instead of an icon
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = limitation,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
+            }
+        }
+    }
 }

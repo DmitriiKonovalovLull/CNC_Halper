@@ -11,22 +11,21 @@ class AIServiceManager @Inject constructor(
     private val cloudAPI: CloudAPI
 ) {
 
-    @Suppress("unused")
     suspend fun processQuery(message: String, preferCloud: Boolean = false): AIResponse {
         return if (preferCloud) {
             try {
                 cloudAPI.processWithCloudAI(message)
-            } catch (_: Exception) {
+            } catch (e: Exception) {
                 // Fallback to local AI if cloud fails
                 miniAIEngine.processQuery(message)
             }
         } else {
             // Use local AI first, then cloud if confidence is low
             val localResponse = miniAIEngine.processQuery(message)
-            if (localResponse.confidence < 0.7f) {
+            if (((localResponse as? AIResponse.Success)?.confidence ?: 0f) < 0.7f) {
                 try {
                     cloudAPI.processWithCloudAI(message)
-                } catch (_: Exception) {
+                } catch (e: Exception) {
                     localResponse
                 }
             } else {
@@ -35,7 +34,6 @@ class AIServiceManager @Inject constructor(
         }
     }
 
-    @Suppress("unused")
     fun getAvailableModels(): List<AIModelType> {
         return listOf(
             AIModelType.MiniTFLite,

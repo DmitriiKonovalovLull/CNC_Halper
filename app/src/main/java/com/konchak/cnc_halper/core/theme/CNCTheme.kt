@@ -1,4 +1,3 @@
-// app/src/main/java/com/konchak/cnc_halper/core/theme/CNCTheme.kt
 package com.konchak.cnc_halper.core.theme
 
 import android.app.Activity
@@ -34,11 +33,15 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun CNCTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
+    // Добавлен параметр для принудительной установки темной темы
+    // Если null, используется системная тема или isSystemInDarkTheme()
+    useDarkTheme: Boolean? = null,
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
+    val systemInDarkTheme = isSystemInDarkTheme()
+    val darkTheme = useDarkTheme ?: systemInDarkTheme // Используем предпочтение пользователя, если оно есть
+
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
@@ -52,7 +55,6 @@ fun CNCTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            // window.statusBarColor = colorScheme.primary.toArgb()
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
     }

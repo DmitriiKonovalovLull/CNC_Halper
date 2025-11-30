@@ -1,6 +1,6 @@
 package com.konchak.cnc_halper.domain.usecases.ai
 
-import com.konchak.cnc_halper.domain.models.ai.MiniAIModel
+import com.konchak.cnc_halper.domain.models.ai.MiniAIModel // Add this import
 import com.konchak.cnc_halper.domain.repositories.AIRepository
 import javax.inject.Inject
 

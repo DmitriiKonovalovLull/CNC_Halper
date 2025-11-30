@@ -11,9 +11,12 @@ data class MachineEntity(
     val name: String,
     val type: String,
     val model: String,
+    val serialNumber: String, // Added serialNumber
     val manufacturer: String,
     val year: Int,
     val status: String,
+    val isActive: Boolean, // Added isActive
+    val lastSync: Long, // Added lastSync
     val lastMaintenance: Long,
     val nextMaintenance: Long,
     val isSynced: Boolean = false,

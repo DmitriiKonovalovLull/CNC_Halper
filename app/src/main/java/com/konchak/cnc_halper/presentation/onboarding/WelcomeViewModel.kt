@@ -1,48 +1,75 @@
 package com.konchak.cnc_halper.presentation.onboarding
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.konchak.cnc_halper.data.local.preferences.AppPreferences
+import com.konchak.cnc_halper.core.utils.LocaleHelper
+import com.konchak.cnc_halper.domain.usecases.onboarding.CheckOnboardingStatusUseCase
+import com.konchak.cnc_halper.domain.usecases.onboarding.CompleteOnboardingUseCase
+import com.konchak.cnc_halper.domain.usecases.onboarding.ResetOnboardingUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class WelcomeViewModel @Inject constructor(
-    private val appPreferences: AppPreferences
+    private val checkOnboardingStatusUseCase: CheckOnboardingStatusUseCase,
+    private val completeOnboardingUseCase: CompleteOnboardingUseCase,
+    private val resetOnboardingUseCase: ResetOnboardingUseCase,
+    private val application: Application // Inject Application context
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(WelcomeState())
     val state: StateFlow<WelcomeState> = _state
 
+    private val _selectedLanguage = MutableStateFlow(LocaleHelper.getPersistedLocale(application))
+    val selectedLanguage: StateFlow<String> = _selectedLanguage
+
     init {
         checkOnboardingStatus()
     }
 
-    private fun checkOnboardingStatus() {
-        viewModelScope.launch {
-            val isOnboardingCompleted = appPreferences.isOnboardingCompleted().first()
-            _state.update { it.copy(isOnboardingCompleted = isOnboardingCompleted) }
+    fun onEvent(event: WelcomeEvent) {
+        when (event) {
+            WelcomeEvent.StartOnboarding -> completeOnboarding()
+            WelcomeEvent.ResetOnboarding -> resetOnboarding()
         }
     }
 
-    fun onEvent(event: WelcomeEvent) {
-        when (event) {
-            WelcomeEvent.StartOnboarding -> {
-                _state.update { it.copy(isLoading = true) }
-                // Можно добавить аналитику начала onboarding
-                _state.update { it.copy(isLoading = false) }
-            }
-            WelcomeEvent.ResetOnboarding -> {
-                viewModelScope.launch {
-                    appPreferences.setOnboardingCompleted(false)
-                    checkOnboardingStatus()
-                }
-            }
+    private fun checkOnboardingStatus() {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isLoading = true)
+            val isOnboardingCompleted = checkOnboardingStatusUseCase()
+            _state.value = _state.value.copy(
+                isOnboardingCompleted = isOnboardingCompleted,
+                isLoading = false
+            )
+        }
+    }
+
+    private fun completeOnboarding() {
+        viewModelScope.launch {
+            completeOnboardingUseCase()
+        }
+    }
+
+    private fun resetOnboarding() {
+        viewModelScope.launch {
+            resetOnboardingUseCase()
+            _state.value = _state.value.copy(isOnboardingCompleted = false)
+        }
+    }
+
+    fun setLanguage(languageCode: String) {
+        if (_selectedLanguage.value != languageCode) {
+            _selectedLanguage.value = languageCode
+            LocaleHelper.setLocale(application, languageCode)
+            // Recreate activity to apply language change immediately
+            // This is a simplified approach, a more robust solution might involve
+            // restarting the main activity or handling configuration changes.
+            // For now, we'll rely on the user navigating back or the app restarting.
         }
     }
 }

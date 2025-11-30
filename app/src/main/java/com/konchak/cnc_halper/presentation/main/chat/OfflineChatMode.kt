@@ -1,224 +1,105 @@
 package com.konchak.cnc_halper.presentation.main.chat
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.konchak.cnc_halper.domain.models.ai.MiniAIModel
-import java.text.SimpleDateFormat
-import java.util.*
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-@Suppress("unused")
-@Composable
-fun OfflineChatMode(
-    viewModel: OfflineChatViewModel = hiltViewModel()
-) {
-    val state by viewModel.state.collectAsState()
+// Data class to represent the state of the offline chat screen
+data class OfflineChatState(
+    val modelInfo: MiniAIModel = MiniAIModel(),
+    val capabilities: List<String> = emptyList(),
+    val limitations: List<String> = emptyList(),
+    val canSync: Boolean = true,
+    val isSyncing: Boolean = false
+)
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Заголовок офлайн-режима
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "📶", // Эмодзи вместо WifiOff
-                    style = MaterialTheme.typography.headlineMedium
+// Sealed interface for events from the UI
+sealed interface OfflineChatEvent {
+    data object SyncModels : OfflineChatEvent
+}
+
+@HiltViewModel
+class OfflineChatViewModel @Inject constructor(
+    // Inject your use cases or repositories here.
+    // For example:
+    // private val getOfflineModelInfoUseCase: GetOfflineModelInfoUseCase,
+    // private val syncAiModelsUseCase: SyncAiModelsUseCase
+) : ViewModel() {
+
+    private val _state = MutableStateFlow(OfflineChatState())
+    val state = _state.asStateFlow()
+
+    init {
+        loadOfflineData()
+    }
+
+    /**
+     * Handles events sent from the UI.
+     */
+    fun onEvent(event: OfflineChatEvent) {
+        when (event) {
+            is OfflineChatEvent.SyncModels -> {
+                syncModels()
+            }
+        }
+    }
+
+    /**
+     * Loads initial information about the on-device model.
+     */
+    private fun loadOfflineData() {
+        viewModelScope.launch {
+            // In a real app, you would fetch this data from a repository or use case.
+            // For demonstration, we're using placeholder data.
+            _state.update {
+                it.copy(
+                    modelInfo = MiniAIModel(
+                        version = "1.2.0-mini",
+                        sizeBytes = 52428800L, // 50 MB
+                        accuracy = 0.85f,
+                        lastUpdated = System.currentTimeMillis() - (86400000 * 3) // 3 days ago
+                    ),
+                    capabilities = listOf(
+                        "Basic G-Code & M-Code lookup",
+                        "Simple calculations (e.g., feed rate)",
+                        "Definitions of CNC terminology"
+                    ),
+                    limitations = listOf(
+                        "Cannot access real-time information",
+                        "Does not understand complex project context",
+                        "Limited to pre-packaged knowledge base"
+                    )
                 )
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(
-                        text = "Офлайн-режим",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Text(
-                        text = "Используется мини-ИИ на устройстве",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-
-        // Информация о модели
-        ModelInfoCard(
-            modelInfo = state.modelInfo,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        // Возможности мини-ИИ
-        CapabilitiesList(
-            capabilities = state.capabilities,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        // Ограничения
-        LimitationsCard(
-            limitations = state.limitations,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        // Кнопка синхронизации
-        if (state.canSync) {
-            Button(
-                onClick = { viewModel.onEvent(OfflineChatEvent.SyncModels) },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !state.isSyncing
-            ) {
-                if (state.isSyncing) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                } else {
-                    Text("Синхронизировать модели ИИ")
-                }
             }
         }
     }
-}
 
-@Composable
-fun ModelInfoCard(
-    modelInfo: MiniAIModel,
-    modifier: Modifier = Modifier
-) {
-    Card(modifier = modifier) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "🤖 Модель мини-ИИ", // Эмодзи для заголовка
-                style = MaterialTheme.typography.titleMedium
-            )
+    /**
+     * Simulates syncing the AI models with a remote server.
+     */
+    private fun syncModels() {
+        viewModelScope.launch {
+            _state.update { it.copy(isSyncing = true) }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Версия:", style = MaterialTheme.typography.bodyMedium)
-                Text(modelInfo.version, style = MaterialTheme.typography.bodyMedium)
-            }
+            // Simulate a network delay
+            kotlinx.coroutines.delay(2000)
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Размер:", style = MaterialTheme.typography.bodyMedium)
-                Text(String.format(Locale.getDefault(), "%.2f MB", modelInfo.modelSize / (1024f * 1024f)), style = MaterialTheme.typography.bodyMedium)
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Точность:", style = MaterialTheme.typography.bodyMedium)
-                Text(String.format(Locale.getDefault(), "%.2f%%", modelInfo.accuracy * 100), style = MaterialTheme.typography.bodyMedium)
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Обновлена:", style = MaterialTheme.typography.bodyMedium)
-                Text(SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault()).format(Date(modelInfo.lastUpdated)), style = MaterialTheme.typography.bodyMedium)
-            }
-        }
-    }
-}
-
-@Composable
-fun CapabilitiesList(
-    capabilities: List<String>,
-    modifier: Modifier = Modifier
-) {
-    Card(modifier = modifier) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = "✅ Возможности мини-ИИ", // Эмодзи для заголовка
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            capabilities.forEach { capability ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "✓", // Символ вместо иконки
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.primary
+            // Here you would call your use case to perform the actual sync.
+            // On completion, update the state.
+            _state.update {
+                it.copy(
+                    isSyncing = false,
+                    modelInfo = it.modelInfo.copy(
+                        version = "1.3.0-mini", // Example of updated data
+                        lastUpdated = System.currentTimeMillis()
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = capability,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun LimitationsCard(
-    limitations: List<String>,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer
-        ),
-        modifier = modifier
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = "⚠️ Ограничения в офлайн-режиме", // Эмодзи для заголовка
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onErrorContainer
-            )
-
-            limitations.forEach { limitation ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "•", // Маркер списка вместо иконки
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = limitation,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                }
+                )
             }
         }
     }

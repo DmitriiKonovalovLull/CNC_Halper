@@ -28,7 +28,7 @@ class ToolListViewModel @Inject constructor(
         loadTools()
     }
 
-    private fun loadTools() {
+    fun loadTools() { // Changed visibility to public
         viewModelScope.launch(Dispatchers.IO) {
             _isLoading.value = true
             try {

@@ -1,4 +1,3 @@
-// app/src/main/java/com/konchak/cnc_halper/data/local/database/dao/ChatDao.kt
 package com.konchak.cnc_halper.data.local.database.dao
 
 import androidx.room.*
@@ -25,4 +24,12 @@ interface ChatDao {
 
     @Query("SELECT COUNT(*) FROM chat_responses WHERE operator_id = :operatorId AND date = :date")
     suspend fun hasAnsweredToday(operatorId: Long, date: Long): Int
+
+    // ИСПРАВЛЕННЫЕ методы - используем единый стиль с нижним подчеркиванием
+
+    @Query("DELETE FROM chat_responses WHERE operator_id = :operatorId")
+    suspend fun deleteChatHistory(operatorId: Long)
+
+    @Query("SELECT * FROM chat_responses WHERE operator_id = :operatorId ORDER BY date DESC LIMIT :limit")
+    fun getRecentChatHistory(operatorId: Long, limit: Int): Flow<List<ChatEntity>>
 }

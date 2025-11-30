@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.konchak.cnc_halper.data.local.database.entities.ToolEntity
 import com.konchak.cnc_halper.domain.models.Tool
+import com.konchak.cnc_halper.domain.models.ToolType
 import com.konchak.cnc_halper.domain.models.ToolUsageRecord
 
 object ToolMapper {
@@ -15,7 +16,7 @@ object ToolMapper {
             id = domain.id.toLongOrNull() ?: 0,
             operatorId = domain.operatorId.toLong(),
             name = domain.name,
-            type = domain.type,
+            type = domain.type.displayName, // Convert enum to String
             size = domain.getSizeString(),
             photoPath = domain.imageUrl,
             diameter = domain.diameter,
@@ -41,7 +42,7 @@ object ToolMapper {
         return Tool(
             id = entity.id.toString(),
             name = entity.name,
-            type = entity.type,
+            type = ToolType.fromDisplayName(entity.type), // Convert String to enum
             diameter = entity.diameter,
             length = entity.length,
             material = entity.material,

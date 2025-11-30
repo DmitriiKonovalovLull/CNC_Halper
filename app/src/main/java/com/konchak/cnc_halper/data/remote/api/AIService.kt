@@ -1,6 +1,6 @@
 package com.konchak.cnc_halper.data.remote.api
 
-import com.konchak.cnc_halper.domain.models.ai.MiniAIModel
+import com.konchak.cnc_halper.domain.models.ai.MiniAIModel // <-- Add this import
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET

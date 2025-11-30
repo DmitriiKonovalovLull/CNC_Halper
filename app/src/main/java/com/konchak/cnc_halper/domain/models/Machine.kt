@@ -5,7 +5,7 @@ data class Machine(
     val name: String,
     val model: String,
     val serialNumber: String,
-    val type: String = "CNC",
+    val type: MachineType = MachineType.OTHER, // Changed to MachineType enum
     val isActive: Boolean = true,
     val lastSync: Long,
     val createdAt: Long = System.currentTimeMillis(),
@@ -16,6 +16,9 @@ data class Machine(
     val nextMaintenance: Long,
     val updatedAt: Long
 ) {
+    val isWorking: Boolean
+        get() = status == "Активен" || status == "В работе" // Assuming "Активен" or "В работе" means working
+
     companion object {
         fun createDefault(): Machine {
             return Machine(
@@ -23,7 +26,7 @@ data class Machine(
                 name = "",
                 model = "",
                 serialNumber = "",
-                type = "CNC",
+                type = MachineType.OTHER, // Changed to MachineType enum
                 lastSync = System.currentTimeMillis(),
                 manufacturer = "",
                 year = 0,

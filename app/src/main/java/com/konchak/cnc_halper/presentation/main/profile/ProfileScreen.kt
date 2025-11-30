@@ -7,7 +7,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Help // ✅ ИСПРАВЛЕНО
+import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.Assistant
 import androidx.compose.material.icons.filled.BatteryAlert
@@ -21,6 +21,9 @@ import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Work
+import androidx.compose.material.icons.filled.MailOutline
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,6 +31,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource // Добавлен импорт для painterResource
+import com.konchak.cnc_halper.R // Добавлен импорт для R.drawable
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -55,7 +60,12 @@ fun ProfileScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.primary
-                )
+                ),
+                actions = {
+                    IconButton(onClick = { onNavigate(Screen.EditProfile.route) }) {
+                        Icon(Icons.Default.Edit, contentDescription = "Редактировать профиль")
+                    }
+                }
             )
         }
     ) { paddingValues ->
@@ -64,26 +74,25 @@ fun ProfileScreen(
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
         ) {
-            // 🔋 Индикатор режима работы (основа энергооптимизации)
             EnergyModeCard(batteryLevel, viewModel.currentEnergyMode)
-
-            // 👤 Основная информация об операторе
             OperatorInfoCard(operatorState.operator)
-
-            // 📊 Статистика и метрики
             OperatorStatsCard(operatorState.operator)
-
-            // 🛠️ Быстрые действия
             QuickActionsCard(
                 onToolsClick = { onNavigate(Screen.ToolScanner.route) },
                 onSyncClick = { viewModel.manualSync() },
                 syncStatus = syncStatus
             )
-
-            // ⚙️ Настройки и безопасность
             SettingsSecurityCard(
                 onSettingsClick = { onNavigate(Screen.Settings.route) },
                 onBiometricClick = { viewModel.toggleBiometricAuth() }
+            )
+            SocialLoginCard(
+                onGoogleLoginClick = { /* TODO: Implement Google login */ },
+                onVkLoginClick = { /* TODO: Implement VK login */ },
+                onRegisterClick = { onNavigate(Screen.Registration.route) }
+            )
+            MessengerCard(
+                onMessengerClick = { /* TODO: Navigate to new chat messenger */ }
             )
         }
     }
@@ -100,9 +109,9 @@ private fun EnergyModeCard(
             .padding(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = when (energyMode) {
-                EnergyMode.ECONOMY -> Color(0xFFFFF9C4) // Light yellow
-                EnergyMode.STANDARD -> Color(0xFFC8E6C9) // Light green
-                EnergyMode.PERFORMANCE -> Color(0xFFB3E5FC) // Light blue
+                EnergyMode.ECONOMY -> Color(0xFFFFF9C4)
+                EnergyMode.STANDARD -> Color(0xFFC8E6C9)
+                EnergyMode.PERFORMANCE -> Color(0xFFB3E5FC)
             }
         )
     ) {
@@ -155,7 +164,6 @@ private fun OperatorInfoCard(operator: Operator?) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Аватар оператора
                 Box(
                     modifier = Modifier
                         .size(64.dp)
@@ -180,7 +188,7 @@ private fun OperatorInfoCard(operator: Operator?) {
                         fontSize = 18.sp
                     )
                     Text(
-                        text = operator?.role ?: "Роль не указана",
+                        text = operator?.role?.russianName ?: "Роль не указана", // Display the russianName of the UserRole enum
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
@@ -193,7 +201,6 @@ private fun OperatorInfoCard(operator: Operator?) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Смена и опыт
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -351,7 +358,7 @@ private fun SettingsSecurityCard(
                 )
 
                 ActionButton(
-                    icon = Icons.AutoMirrored.Filled.Help, // ✅ ИСПРАВЛЕНО
+                    icon = Icons.AutoMirrored.Filled.Help,
                     text = "Помощь",
                     onClick = { /* TODO */ }
                 )
@@ -360,7 +367,84 @@ private fun SettingsSecurityCard(
     }
 }
 
-// Вспомогательные компоненты
+@Composable
+private fun SocialLoginCard(
+    onGoogleLoginClick: () -> Unit,
+    onVkLoginClick: () -> Unit,
+    onRegisterClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "ВХОД И РЕГИСТРАЦИЯ",
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                ActionButton(
+                    icon = painterResource(id = R.drawable.ic_google), // Используем иконку Google
+                    text = "Войти\nчерез Google",
+                    onClick = onGoogleLoginClick
+                )
+
+                ActionButton(
+                    icon = painterResource(id = R.drawable.ic_vk), // Используем иконку VK
+                    text = "Войти\nчерез VK",
+                    onClick = onVkLoginClick
+                )
+
+                ActionButton(
+                    icon = Icons.Default.PersonAdd,
+                    text = "Регистрация",
+                    onClick = onRegisterClick
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MessengerCard(
+    onMessengerClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "ЧАТ-МЕССЕНДЖЕР",
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                ActionButton(
+                    icon = Icons.Default.MailOutline,
+                    text = "Открыть\nМессенджер",
+                    onClick = onMessengerClick
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun InfoChip(icon: ImageVector, text: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -398,7 +482,7 @@ private fun StatItem(value: String, label: String) {
 
 @Composable
 private fun ActionButton(
-    icon: ImageVector,
+    icon: Any, // Изменено на Any для поддержки ImageVector и Painter
     text: String,
     onClick: () -> Unit
 ) {
@@ -408,12 +492,21 @@ private fun ActionButton(
             .width(80.dp)
             .clickable(onClick = onClick)
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(32.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
+        if (icon is ImageVector) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(32.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+        } else if (icon is androidx.compose.ui.graphics.painter.Painter) {
+            Icon(
+                painter = icon,
+                contentDescription = null,
+                modifier = Modifier.size(32.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = text,

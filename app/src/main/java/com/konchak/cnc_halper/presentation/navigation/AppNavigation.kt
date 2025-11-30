@@ -14,6 +14,9 @@ import com.konchak.cnc_halper.presentation.main.machines.AddMachineScreen
 import com.konchak.cnc_halper.presentation.main.machines.MachineDetailScreen
 import com.konchak.cnc_halper.presentation.main.machines.MachineListScreen
 import com.konchak.cnc_halper.presentation.main.machines.MachineListViewModel
+import com.konchak.cnc_halper.presentation.main.machines.MachineSettingsScreen
+import com.konchak.cnc_halper.presentation.main.machines.MachineStatsScreen
+import com.konchak.cnc_halper.presentation.main.profile.EditProfileScreen
 import com.konchak.cnc_halper.presentation.main.profile.ProfileScreen
 import com.konchak.cnc_halper.presentation.main.profile.SettingsScreen
 import com.konchak.cnc_halper.presentation.main.tools.AddEditToolScreen
@@ -21,6 +24,10 @@ import com.konchak.cnc_halper.presentation.main.tools.EndOperationScreen
 import com.konchak.cnc_halper.presentation.main.tools.ToolDetailScreen
 import com.konchak.cnc_halper.presentation.main.tools.ToolListScreen
 import com.konchak.cnc_halper.presentation.main.tools.ToolScannerScreen
+import com.konchak.cnc_halper.presentation.main.tools.ToolListForMachineScreen // Import the new screen
+import com.konchak.cnc_halper.presentation.main.works.AddWorkScreen // Import AddWorkScreen
+import com.konchak.cnc_halper.presentation.main.works.MyWorksScreen
+import com.konchak.cnc_halper.presentation.main.works.MyWorksViewModel // Import MyWorksViewModel
 import com.konchak.cnc_halper.presentation.onboarding.EquipmentSetupScreen
 import com.konchak.cnc_halper.presentation.onboarding.RoleSelectionScreen
 import com.konchak.cnc_halper.presentation.onboarding.TutorialScreen
@@ -47,6 +54,9 @@ fun NavGraphBuilder.appGraph(navController: NavHostController) {
     composable(Screen.Registration.route) {
         RegistrationScreen(navController = navController)
     }
+    composable(Screen.EditProfile.route) {
+        EditProfileScreen(navController = navController)
+    }
 
     // Machines flow
     composable(Screen.MachineList.route) {
@@ -69,7 +79,42 @@ fun NavGraphBuilder.appGraph(navController: NavHostController) {
             onSave = { newMachine ->
                 viewModel.addNewMachine(newMachine)
                 navController.popBackStack()
-            }
+            },
+            machineId = null // Adding a new machine
+        )
+    }
+    composable(
+        "edit_machine/{machineId}",
+        arguments = listOf(navArgument("machineId") { type = NavType.StringType })
+    ) { backStackEntry ->
+        val viewModel: MachineListViewModel = hiltViewModel() // Use MachineListViewModel for saving/updating
+        AddMachineScreen(
+            onBack = { navController.popBackStack() },
+            onSave = { updatedMachine ->
+                // In a real app, you'd have an updateMachine use case
+                // For now, we'll just add it (or replace if ID matches)
+                viewModel.addNewMachine(updatedMachine) // This will effectively update if ID exists due to REPLACE strategy
+                navController.popBackStack()
+            },
+            machineId = backStackEntry.arguments?.getString("machineId") // Editing an existing machine
+        )
+    }
+    composable(
+        "machine_stats/{machineId}",
+        arguments = listOf(navArgument("machineId") { type = NavType.StringType })
+    ) { backStackEntry ->
+        MachineStatsScreen(
+            navController = navController,
+            machineId = backStackEntry.arguments?.getString("machineId")
+        )
+    }
+    composable(
+        "machine_settings/{machineId}",
+        arguments = listOf(navArgument("machineId") { type = NavType.StringType })
+    ) { backStackEntry ->
+        MachineSettingsScreen(
+            navController = navController,
+            machineId = backStackEntry.arguments?.getString("machineId")
         )
     }
 
@@ -114,6 +159,24 @@ fun NavGraphBuilder.appGraph(navController: NavHostController) {
             navController = navController,
             toolId = backStackEntry.arguments?.getString("toolId")
         )
+    }
+    composable(
+        "tool_list_for_machine/{machineId}",
+        arguments = listOf(navArgument("machineId") { type = NavType.StringType })
+    ) { backStackEntry ->
+        ToolListForMachineScreen(
+            navController = navController,
+            machineId = backStackEntry.arguments?.getString("machineId")
+        )
+    }
+
+    // Works flow
+    composable(Screen.MyWorks.route) {
+        MyWorksScreen(navController = navController)
+    }
+    composable(Screen.AddWork.route) { // Add AddWorkScreen to the navigation graph
+        val viewModel: MyWorksViewModel = hiltViewModel()
+        AddWorkScreen(navController = navController, viewModel = viewModel)
     }
 
     // Other screens

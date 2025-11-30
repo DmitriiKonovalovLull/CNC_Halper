@@ -4,6 +4,7 @@ package com.konchak.cnc_halper.presentation.main.tools
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.konchak.cnc_halper.domain.models.Tool
+import com.konchak.cnc_halper.domain.models.ToolType
 import com.konchak.cnc_halper.domain.repositories.ToolRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -105,7 +106,7 @@ class ToolScannerViewModel @Inject constructor(
                 val tool = Tool(
                     id = System.currentTimeMillis().toString(),
                     name = "Сканированная фреза ${System.currentTimeMillis()}",
-                    type = "Концевая фреза",
+                    type = ToolType.END_MILL, // Changed to ToolType enum
                     diameter = 12.0f,
                     length = 50.0f,
                     material = "Твердый сплав",

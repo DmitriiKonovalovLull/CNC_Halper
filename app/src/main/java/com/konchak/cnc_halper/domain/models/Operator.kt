@@ -7,7 +7,7 @@ data class Operator(
     val workshop: String = "",
     val shift: String = "day", // "day", "night", "mixed"
     val experience: Int = 0, // months
-    val role: String = "operator", // "operator", "master", "admin"
+    val role: UserRole = UserRole.OPERATOR, // Use UserRole enum
     val createdAt: Long = System.currentTimeMillis(),
     val lastActive: Long = System.currentTimeMillis(),
     val stats: OperatorStats = OperatorStats()
@@ -20,7 +20,7 @@ data class Operator(
         workshop = "",
         shift = "day",
         experience = 0,
-        role = "operator",
+        role = UserRole.OPERATOR, // Use UserRole enum
         createdAt = System.currentTimeMillis(),
         lastActive = System.currentTimeMillis(),
         stats = OperatorStats()

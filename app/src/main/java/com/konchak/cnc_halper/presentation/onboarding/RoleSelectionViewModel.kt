@@ -3,6 +3,7 @@ package com.konchak.cnc_halper.presentation.onboarding
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.konchak.cnc_halper.data.local.preferences.AppPreferences
+import com.konchak.cnc_halper.domain.models.UserRole
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,30 +23,31 @@ class RoleSelectionViewModel @Inject constructor(
         when (event) {
             is RoleSelectionEvent.SelectRole -> {
                 _state.update { it.copy(selectedRole = event.role) }
+                // Automatically continue after role selection
+                saveRoleAndContinue(event.role)
             }
             RoleSelectionEvent.Continue -> {
-                _state.update { it.copy(isLoading = true) }
-                viewModelScope.launch {
-                    state.value.selectedRole?.let { role: UserRole ->
-                        appPreferences.setUserRole(role.name)
-                    }
-                    _state.update { it.copy(isLoading = false) }
-                }
+                // This event is no longer needed as selection automatically continues
             }
+        }
+    }
+
+    private fun saveRoleAndContinue(role: UserRole) {
+        _state.update { it.copy(isLoading = true) }
+        viewModelScope.launch {
+            appPreferences.setUserRole(role.name)
+            _state.update { it.copy(isLoading = false, roleSavedAndContinued = true) }
         }
     }
 }
 
-enum class UserRole {
-    OPERATOR, TECHNOLOGIST, WORKSHOP_MASTER
-}
-
 data class RoleSelectionState(
     val selectedRole: UserRole? = null,
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val roleSavedAndContinued: Boolean = false // New state to trigger navigation
 )
 
 sealed class RoleSelectionEvent {
     data class SelectRole(val role: UserRole) : RoleSelectionEvent()
-    object Continue : RoleSelectionEvent()
+    object Continue : RoleSelectionEvent() // Still needed for now, but will be removed from UI
 }
