@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.res.Configuration
 import android.content.res.Resources
 import android.os.Build
+import android.os.LocaleList
 import java.util.Locale
 
 object LocaleHelper {
@@ -32,14 +33,16 @@ object LocaleHelper {
         val resources: Resources = context.resources
         val configuration: Configuration = resources.configuration
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            configuration.setLocale(locale)
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            configuration.setLocales(LocaleList(locale))
             context.createConfigurationContext(configuration)
         } else {
+            @Suppress("DEPRECATION")
             configuration.locale = locale
+            @Suppress("DEPRECATION")
             resources.updateConfiguration(configuration, resources.displayMetrics)
+            context
         }
-        return context
     }
 
     fun onAttach(context: Context): Context {

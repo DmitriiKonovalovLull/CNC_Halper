@@ -28,7 +28,7 @@ fun SettingsScreen(
 ) {
     val isDarkMode by viewModel.isDarkMode.collectAsState()
     val selectedLanguage by viewModel.selectedLanguage.collectAsState()
-    val context = LocalContext.current
+    // val context = LocalContext.current // Removed unused variable
     val activity = (LocalContext.current as? Activity)
 
     Scaffold(

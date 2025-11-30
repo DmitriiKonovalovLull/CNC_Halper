@@ -36,6 +36,7 @@ android {
             buildConfigField("String", "FIREBASE_PROJECT_ID", "\"cnc-helper-production\"")
             buildConfigField("boolean", "ENABLE_ANALYTICS", "true")
             buildConfigField("boolean", "LOG_DEBUG", "false")
+            buildConfigField("String", "DEEPSEEK_API_KEY", "\"${project.findProperty("DEEPSEEK_API_KEY")}\"") // Added
         }
         debug {
             isMinifyEnabled = false
@@ -45,6 +46,7 @@ android {
             buildConfigField("String", "FIREBASE_PROJECT_ID", "\"cnc-helper-dev\"")
             buildConfigField("boolean", "ENABLE_ANALYTICS", "false")
             buildConfigField("boolean", "LOG_DEBUG", "true")
+            buildConfigField("String", "DEEPSEEK_API_KEY", "\"${project.findProperty("DEEPSEEK_API_KEY")}\"") // Added
         }
     }
 
@@ -92,6 +94,8 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx) // Added
+    implementation(libs.androidx.lifecycle.livedata.ktx) // Added
 
     // Compose
     implementation(platform(libs.androidx.compose.bom))
@@ -101,7 +105,7 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.androidx.compose.material.icons.extended) // Corrected
 
     // DI - Hilt
     implementation(libs.hilt.android)

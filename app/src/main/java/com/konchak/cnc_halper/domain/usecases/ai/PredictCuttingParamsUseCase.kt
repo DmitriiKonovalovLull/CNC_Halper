@@ -114,7 +114,7 @@ class PredictCuttingParamsUseCase @Inject constructor(
     private fun parseCuttingParamsFromResponse(
         response: String,
         material: String,
-        @Suppress("unused") toolType: String, // Removed @Suppress("unused") from parameter
+        @Suppress("unused") toolType: String, // Added @Suppress("unused") back
         operation: String,
         workpieceDiameter: Float,
         toolDiameter: Float,

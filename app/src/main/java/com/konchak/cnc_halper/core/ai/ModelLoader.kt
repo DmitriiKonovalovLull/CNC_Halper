@@ -42,7 +42,6 @@ class ModelLoader @Inject constructor(
         }
     }
 
-    @Suppress("unused")
     suspend fun optimizeModelForDevice(model: MiniAIModel): MiniAIModel { // Removed @Suppress("unused") from parameter
         return try {
             // Имитация оптимизации модели под устройство
