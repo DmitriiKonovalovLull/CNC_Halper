@@ -1,0 +1,36 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp"
+    android:height="100dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+
+  <!-- Gear -->
+  <path
+      android:fillColor="#8090A4AE"
+      android:pathData="M50,40 a10,10 0 1,0 0,20 a10,10 0 1,0 0,-20zM50,42 a8,8 0 1,1 0,16 a8,8 0 1,1 0,-16z" />
+  <path
+      android:fillColor="#8090A4AE"
+      android:pathData="M50,35 L50,65 M42,38 l16,24 M58,38 l-16,24"
+      android:strokeWidth="2"
+      android:strokeColor="#8090A4AE"/>
+  <path
+      android:fillColor="#8090A4AE"
+      android:pathData="M50,30 l0,-5 M50,70 l0,5 M30,50 l-5,0 M70,50 l5,0 M39.4,39.4 l-3.5,-3.5 M60.6,60.6 l3.5,3.5 M39.4,60.6 l-3.5,3.5 M60.6,39.4 l3.5,-3.5"
+      android:strokeWidth="3"
+      android:strokeColor="#8090A4AE"/>
+
+  <!-- Beaker -->
+  <path
+      android:fillColor="#80FFFFFF"
+      android:strokeColor="#8090A4AE"
+      android:strokeWidth="1"
+      android:pathData="M15,80 l0,-20 q0,-5 5,-5 l10,0 q5,0 5,5 l0,20z"/>
+  <path
+      android:fillColor="#804FC3F7"
+      android:pathData="M15,80 l0,-10 l20,0 l0,10z"/>
+  <path
+      android:strokeColor="#8090A4AE"
+      android:strokeWidth="1"
+      android:pathData="M13,60 l24,0"/>
+
+</vector>

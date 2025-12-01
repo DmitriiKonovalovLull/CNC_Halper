@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
@@ -17,13 +18,64 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.paint
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.konchak.cnc_halper.R
 import com.konchak.cnc_halper.domain.models.ChatMessage
-import com.konchak.cnc_halper.domain.models.MessageType
 import java.text.SimpleDateFormat
 import java.util.*
+
+enum class ChatTheme(
+    val colors: ColorScheme,
+    val backgroundRes: Int,
+    val userMessageBrush: Brush,
+    val aiMessageBrush: Brush
+) {
+    SCIENTIFIC(
+        lightColorScheme(
+            primary = Color(0xFF0D47A1),
+            onPrimary = Color.White,
+            surface = Color(0xFFFFFFFF),
+            onSurface = Color(0xFF000000),
+            errorContainer = Color(0xFFFFDAD6),
+            onErrorContainer = Color(0xFF410002)
+        ),
+        R.drawable.scientific_pattern, // Используем векторный узор напрямую
+        Brush.linearGradient(listOf(Color(0xFF42A5F5), Color(0xFF1976D2))),
+        Brush.linearGradient(listOf(Color(0xFFFAFAFA), Color(0xFFE0E0E0)))
+    ),
+    FLOWERS(
+        lightColorScheme(
+            primary = Color(0xFF8E24AA),
+            onPrimary = Color.White,
+            surface = Color(0xFFFFFFFF),
+            onSurface = Color(0xFF000000),
+            errorContainer = Color(0xFFFFDAD6),
+            onErrorContainer = Color(0xFF410002)
+        ),
+        R.drawable.flowers_pattern, // Используем векторный узор напрямую
+        Brush.linearGradient(listOf(Color(0xFFCE93D8), Color(0xFFAB47BC))),
+        Brush.linearGradient(listOf(Color(0xFFFCE4EC), Color(0xFFF8BBD0)))
+    ),
+    RAINBOW(
+        lightColorScheme(
+            primary = Color(0xFFD81B60),
+            onPrimary = Color.White,
+            surface = Color(0xFFFFFFFF),
+            onSurface = Color(0xFF000000),
+            errorContainer = Color(0xFFFFDAD6),
+            onErrorContainer = Color(0xFF410002)
+        ),
+        R.drawable.rainbow_pattern, // Используем векторный узор напрямую
+        Brush.linearGradient(listOf(Color(0xFFF06292), Color(0xFFEC407A))),
+        Brush.linearGradient(listOf(Color(0xFFF8BBD0), Color(0xFFF48FB1)))
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,53 +84,88 @@ fun ChatScreen(
 ) {
     val chatState by viewModel.chatState.collectAsState()
     val lazyListState = rememberLazyListState()
+    val selectedTheme by viewModel.theme.collectAsState()
 
     var showClearDialog by remember { mutableStateOf(false) }
+    var showThemeMenu by remember { mutableStateOf(false) }
 
-    // Automatically scroll to the bottom when a new message is added
     LaunchedEffect(chatState.messages.size) {
         if (chatState.messages.isNotEmpty()) {
-            lazyListState.animateScrollToItem(0)
+            lazyListState.animateScrollToItem(chatState.messages.size - 1)
         }
     }
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text("Чат с AI помощником")
-                },
-                actions = {
-                    IconButton(onClick = { showClearDialog = true }) {
-                        Icon(Icons.Default.Delete, "Очистить историю")
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
-        Column(
+    MaterialTheme(colorScheme = selectedTheme.colors) {
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .paint(
+                    painter = painterResource(id = selectedTheme.backgroundRes),
+                    contentScale = ContentScale.Crop, // Растягиваем узор
+                    alpha = 0.1f // Делаем его полупрозрачным
+                )
         ) {
-            MessagesList(
-                messages = chatState.messages,
-                modifier = Modifier.weight(1f),
-                lazyListState = lazyListState
-            )
-
-            StatusPanel(
-                isLoading = chatState.isLoading,
-                error = chatState.error,
-                onRetry = { viewModel.onEvent(ChatEvent.RetryLoadHistory) },
-                onClearError = { viewModel.onEvent(ChatEvent.ClearError) }
-            )
-
-            MessageInput(
-                onSendMessage = { message ->
-                    viewModel.onEvent(ChatEvent.SendMessage(message))
+            Scaffold(
+                containerColor = Color.Transparent,
+                topBar = {
+                    CenterAlignedTopAppBar(
+                        title = {
+                            Text("Чат с AI помощником")
+                        },
+                        actions = {
+                            IconButton(onClick = { showClearDialog = true }) {
+                                Icon(Icons.Default.Delete, "Очистить историю")
+                            }
+                            IconButton(onClick = { showThemeMenu = true }) {
+                                Icon(Icons.Default.MoreVert, "Темы")
+                            }
+                            DropdownMenu(
+                                expanded = showThemeMenu,
+                                onDismissRequest = { showThemeMenu = false }
+                            ) {
+                                ChatTheme.entries.forEach { theme ->
+                                    DropdownMenuItem(
+                                        text = { Text(theme.name.lowercase().replaceFirstChar { it.uppercase() }) },
+                                        onClick = {
+                                            viewModel.onEvent(ChatEvent.ChangeTheme(theme))
+                                            showThemeMenu = false
+                                        }
+                                    )
+                                }
+                            }
+                        },
+                        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                            containerColor = Color.Transparent
+                        )
+                    )
                 }
-            )
+            ) { paddingValues ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                ) {
+                    MessagesList(
+                        messages = chatState.messages,
+                        modifier = Modifier.weight(1f),
+                        lazyListState = lazyListState,
+                        theme = selectedTheme
+                    )
+
+                    StatusPanel(
+                        isLoading = chatState.isLoading,
+                        error = chatState.error,
+                        onRetry = { viewModel.onEvent(ChatEvent.RetryLoadHistory) },
+                        onClearError = { viewModel.onEvent(ChatEvent.ClearError) }
+                    )
+
+                    MessageInput(
+                        onSendMessage = { message ->
+                            viewModel.onEvent(ChatEvent.SendMessage(message))
+                        }
+                    )
+                }
+            }
         }
     }
 
@@ -110,23 +197,23 @@ fun ChatScreen(
 private fun MessagesList(
     messages: List<ChatMessage>,
     modifier: Modifier = Modifier,
-    lazyListState: androidx.compose.foundation.lazy.LazyListState
+    lazyListState: androidx.compose.foundation.lazy.LazyListState,
+    theme: ChatTheme
 ) {
     LazyColumn(
         modifier = modifier,
         state = lazyListState,
-        reverseLayout = true,
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        items(messages.reversed(), key = { it.id }) { message ->
-            ChatBubble(message = message)
+        items(messages, key = { it.id }) { message ->
+            ChatBubble(message = message, theme = theme)
         }
     }
 }
 
 @Composable
-private fun ChatBubble(message: ChatMessage) {
+private fun ChatBubble(message: ChatMessage, theme: ChatTheme) {
     val isUser = message.isUser
 
     Row(
@@ -139,7 +226,7 @@ private fun ChatBubble(message: ChatMessage) {
             Spacer(modifier = Modifier.width(8.dp))
         }
 
-        MessageCard(message = message, isUser = isUser)
+        MessageCard(message = message, isUser = isUser, theme = theme)
 
         if (isUser) {
             Spacer(modifier = Modifier.width(8.dp))
@@ -149,30 +236,22 @@ private fun ChatBubble(message: ChatMessage) {
 }
 
 @Composable
-private fun MessageCard(message: ChatMessage, isUser: Boolean) {
+private fun MessageCard(message: ChatMessage, isUser: Boolean, theme: ChatTheme) {
     Column(
         horizontalAlignment = if (isUser) Alignment.End else Alignment.Start
     ) {
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = when {
-                    isUser -> MaterialTheme.colorScheme.primary
-                    message.messageType == MessageType.ERROR -> MaterialTheme.colorScheme.errorContainer
-                    message.messageType == MessageType.SYSTEM_MESSAGE -> MaterialTheme.colorScheme.surfaceVariant
-                    else -> MaterialTheme.colorScheme.surface
-                }
-            ),
-            shape = RoundedCornerShape(16.dp),
-            modifier = Modifier.widthIn(max = 280.dp)
+        Box(
+            modifier = Modifier
+                .widthIn(max = 280.dp)
+                .background(
+                    brush = if (isUser) theme.userMessageBrush else theme.aiMessageBrush,
+                    shape = RoundedCornerShape(16.dp)
+                )
         ) {
             Text(
                 text = message.message,
                 modifier = Modifier.padding(12.dp),
-                color = when {
-                    isUser -> MaterialTheme.colorScheme.onPrimary
-                    message.messageType == MessageType.ERROR -> MaterialTheme.colorScheme.onErrorContainer
-                    else -> MaterialTheme.colorScheme.onSurface
-                }
+                color = if (isUser) theme.colors.onPrimary else theme.colors.onSurface
             )
         }
         Text(
@@ -223,7 +302,7 @@ private fun MessageInput(onSendMessage: (String) -> Unit) {
     var text by remember { mutableStateOf("") }
     val isSendEnabled = text.isNotBlank()
 
-    Surface(shadowElevation = 8.dp) {
+    Surface(shadowElevation = 8.dp, color = Color.White.copy(alpha = 0.8f)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()

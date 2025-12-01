@@ -3,12 +3,13 @@ package com.konchak.cnc_halper.core.di
 import android.content.Context
 import androidx.room.Room
 import com.konchak.cnc_halper.data.local.database.AppDatabase
+import com.konchak.cnc_halper.data.local.database.dao.AIKnowledgeDao // Убедись что этот импорт есть
 import com.konchak.cnc_halper.data.local.database.dao.ChatDao
 import com.konchak.cnc_halper.data.local.database.dao.MachineDao
 import com.konchak.cnc_halper.data.local.database.dao.OfflineCacheDao
 import com.konchak.cnc_halper.data.local.database.dao.OperatorDao
 import com.konchak.cnc_halper.data.local.database.dao.ToolDao
-import com.konchak.cnc_halper.data.local.database.dao.WorkDao // Added WorkDao import
+import com.konchak.cnc_halper.data.local.database.dao.WorkDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -57,7 +58,12 @@ object DatabaseModule {
     }
 
     @Provides
-    fun provideWorkDao(appDatabase: AppDatabase): WorkDao { // Moved from di/DatabaseModule.kt
+    fun provideWorkDao(appDatabase: AppDatabase): WorkDao {
         return appDatabase.workDao()
+    }
+
+    @Provides
+    fun provideAIKnowledgeDao(appDatabase: AppDatabase): AIKnowledgeDao {
+        return appDatabase.aiKnowledgeDao()
     }
 }

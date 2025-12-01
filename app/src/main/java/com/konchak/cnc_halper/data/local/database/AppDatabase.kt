@@ -13,17 +13,27 @@ import com.konchak.cnc_halper.data.local.database.dao.ToolDao
 import com.konchak.cnc_halper.data.local.database.dao.MachineDao
 import com.konchak.cnc_halper.data.local.database.dao.OfflineCacheDao
 import com.konchak.cnc_halper.data.local.database.dao.WorkDao
+import com.konchak.cnc_halper.data.local.database.dao.AIKnowledgeDao // ДОБАВИЛ ИМПОРТ
 import com.konchak.cnc_halper.data.local.database.entities.OperatorEntity
 import com.konchak.cnc_halper.data.local.database.entities.ChatEntity
 import com.konchak.cnc_halper.data.local.database.entities.ToolEntity
 import com.konchak.cnc_halper.data.local.database.entities.MachineEntity
 import com.konchak.cnc_halper.data.local.database.entities.OfflineCacheEntity
 import com.konchak.cnc_halper.data.local.database.entities.WorkEntity
-import com.konchak.cnc_halper.data.local.database.entities.OperatorStatsEntity // Добавлен импорт для OperatorStatsEntity
+import com.konchak.cnc_halper.data.local.database.entities.OperatorStatsEntity
+import com.konchak.cnc_halper.data.local.database.entities.AIKnowledgeEntity // ДОБАВИЛ ИМПОРТ
 
 @Database(
-    entities = [OperatorEntity::class, ChatEntity::class, ToolEntity::class, MachineEntity::class, OfflineCacheEntity::class, WorkEntity::class],
-    version = 17, // Увеличена версия базы данных
+    entities = [
+        OperatorEntity::class,
+        ChatEntity::class,
+        ToolEntity::class,
+        MachineEntity::class,
+        OfflineCacheEntity::class,
+        WorkEntity::class,
+        AIKnowledgeEntity::class // ДОБАВИЛ В СПИСОК ENTITIES
+    ],
+    version = 18, // УВЕЛИЧИЛ ВЕРСИЮ НА 1 (с 17 до 18)
     exportSchema = false
 )
 @TypeConverters(ToolUsageRecordConverter::class, WorkConverter::class)
@@ -34,6 +44,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun machineDao(): MachineDao
     abstract fun offlineCacheDao(): OfflineCacheDao
     abstract fun workDao(): WorkDao
+    abstract fun aiKnowledgeDao(): AIKnowledgeDao // ДОБАВИЛ МЕТОД ДЛОЯ ДОСТУПА К DAO
 
     companion object {
         @Volatile
@@ -45,8 +56,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "cnc_database"
-                ).fallbackToDestructiveMigration()
-                .build()
+                )
+                    .fallbackToDestructiveMigration() // ВРЕМЕННО для разработки
+                    .build()
                 INSTANCE = instance
                 instance
             }

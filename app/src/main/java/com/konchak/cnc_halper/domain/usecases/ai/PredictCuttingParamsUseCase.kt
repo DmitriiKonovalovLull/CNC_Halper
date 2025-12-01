@@ -2,7 +2,7 @@ package com.konchak.cnc_halper.domain.usecases.ai
 
 import com.konchak.cnc_halper.domain.models.AIResponse
 import com.konchak.cnc_halper.domain.models.CuttingParameters
-import com.konchak.cnc_halper.domain.models.ai.MiniAIModel // <-- Import added
+import com.konchak.cnc_halper.domain.models.ai.MiniAIModel
 import com.konchak.cnc_halper.domain.repositories.AIRepository
 import kotlin.math.PI
 import javax.inject.Inject
@@ -11,7 +11,6 @@ class PredictCuttingParamsUseCase @Inject constructor(
     private val aiRepository: AIRepository
 ) {
 
-    // Main method for predicting parameters
     suspend operator fun invoke(
         material: String,
         toolType: String,
@@ -48,10 +47,8 @@ class PredictCuttingParamsUseCase @Inject constructor(
         }
     }
 
-    // Method to get information about the AI model
     suspend fun getModelInfo(): MiniAIModel? = aiRepository.getModelInfo()
 
-    // Method to get tool capabilities by tool type
     fun getToolCapabilities(toolType: String): List<String> {
         return when {
             toolType.contains("milling cutter", ignoreCase = true) -> listOf(
@@ -86,7 +83,6 @@ class PredictCuttingParamsUseCase @Inject constructor(
         }
     }
 
-    // Method to check if a tool type is supported
     fun isToolTypeSupported(toolType: String): Boolean {
         val supportedTypes = listOf(
             "milling cutter", "end mill", "drill", "lathe tool",
@@ -95,7 +91,6 @@ class PredictCuttingParamsUseCase @Inject constructor(
         return supportedTypes.any { toolType.contains(it, ignoreCase = true) }
     }
 
-    // Method to get recommended materials for a tool type
     fun getRecommendedMaterials(toolType: String): List<String> {
         return when {
             toolType.contains("milling cutter", ignoreCase = true) -> listOf(
@@ -114,7 +109,7 @@ class PredictCuttingParamsUseCase @Inject constructor(
     private fun parseCuttingParamsFromResponse(
         response: String,
         material: String,
-        @Suppress("unused") toolType: String, // Added @Suppress("unused") back
+        toolType: String, // ИЗМЕНЕНО: убрал @Suppress("unused")
         operation: String,
         workpieceDiameter: Float,
         toolDiameter: Float,
@@ -125,7 +120,6 @@ class PredictCuttingParamsUseCase @Inject constructor(
         val feedRate = extractValue(response, "feed", getDefaultFeed(toolType, cuttingToolType))
         val depthOfCut = extractValue(response, "depth of cut", getDefaultDepth(operation, cuttingToolType))
 
-        // Calculated parameters depending on the tool type
         val (rpm, feedPerMinute) = when (cuttingToolType) {
             CuttingParameters.ToolType.TURNING -> {
                 val effectiveDiameter = if (workpieceDiameter > 0) workpieceDiameter else getDefaultWorkpieceDiameter()
@@ -260,8 +254,6 @@ class PredictCuttingParamsUseCase @Inject constructor(
         )
     }
 
-    // Helper methods for calculations
-
     private fun calculateMillingRpm(cuttingSpeed: Float, toolDiameter: Float): Int {
         return if (toolDiameter > 0) {
             (cuttingSpeed * 1000 / (PI * toolDiameter)).toInt()
@@ -311,7 +303,6 @@ class PredictCuttingParamsUseCase @Inject constructor(
         return cuttingSpeed * feedRate * depthOfCut * materialFactor * toolTypeFactor * 0.01f
     }
 
-    // Determine tool type by name
     private fun detectToolType(toolType: String): CuttingParameters.ToolType {
         return when {
             toolType.contains("milling cutter", ignoreCase = true) ||
@@ -348,7 +339,6 @@ class PredictCuttingParamsUseCase @Inject constructor(
             else -> 120f
         }
 
-        // Adjust speed for different processing types
         return when (toolType) {
             CuttingParameters.ToolType.TURNING -> baseSpeed * 1.1f
             CuttingParameters.ToolType.DRILLING -> baseSpeed * 0.8f
@@ -473,7 +463,6 @@ class PredictCuttingParamsUseCase @Inject constructor(
             else -> 90
         }
 
-        // Adjust tool life for turning tools
         return when (cuttingToolType) {
             CuttingParameters.ToolType.TURNING -> (baseLife * 1.5).toInt()
             else -> baseLife

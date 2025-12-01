@@ -1,0 +1,42 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp"
+    android:height="100dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+
+  <!-- Rainbow -->
+  <path
+      android:strokeColor="#4DFF0000"
+      android:strokeWidth="3"
+      android:pathData="M10,90 A 40,40 0 0,1 90,90" />
+  <path
+      android:strokeColor="#4DFF7F00"
+      android:strokeWidth="3"
+      android:pathData="M15,90 A 35,35 0 0,1 85,90" />
+  <path
+      android:strokeColor="#4DFFFF00"
+      android:strokeWidth="3"
+      android:pathData="M20,90 A 30,30 0 0,1 80,90" />
+  <path
+      android:strokeColor="#4D00FF00"
+      android:strokeWidth="3"
+      android:pathData="M25,90 A 25,25 0 0,1 75,90" />
+  <path
+      android:strokeColor="#4D0000FF"
+      android:strokeWidth="3"
+      android:pathData="M30,90 A 20,20 0 0,1 70,90" />
+  <path
+      android:strokeColor="#4D4B0082"
+      android:strokeWidth="3"
+      android:pathData="M35,90 A 15,15 0 0,1 65,90" />
+  <path
+      android:strokeColor="#4D8F00FF"
+      android:strokeWidth="3"
+      android:pathData="M40,90 A 10,10 0 0,1 60,90" />
+
+  <!-- Heart -->
+  <path
+      android:fillColor="#4DE91E63"
+      android:pathData="M50,20 L55,15 A5,5 0 0,1 62,22 L50,35 L38,22 A5,5 0 0,1 45,15 L50,20 Z" />
+
+</vector>

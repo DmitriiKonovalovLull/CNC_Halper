@@ -1,24 +1,33 @@
 package com.konchak.cnc_halper.presentation.main.tools
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
 import com.konchak.cnc_halper.domain.models.Tool
 import com.konchak.cnc_halper.domain.models.ToolUsageRecord
 import java.text.SimpleDateFormat
@@ -113,6 +122,14 @@ private fun ToolDetailContent(
     navController: NavHostController,
     toolId: String
 ) {
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            viewModel.updateToolImage(toolId, it)
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -120,7 +137,9 @@ private fun ToolDetailContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        ToolHeaderSection(tool)
+        ToolHeaderSection(tool) {
+            imagePickerLauncher.launch("image/*")
+        }
         ToolParametersSection(tool)
         WearStatusSection(tool)
         UsageHistorySection(tool.usageHistory)
@@ -134,7 +153,7 @@ private fun ToolDetailContent(
 }
 
 @Composable
-private fun ToolHeaderSection(tool: Tool) {
+private fun ToolHeaderSection(tool: Tool, onImageClick: () -> Unit) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -143,24 +162,48 @@ private fun ToolHeaderSection(tool: Tool) {
             Box(
                 modifier = Modifier
                     .size(80.dp)
+                    .clip(CircleShape)
                     .background(
                         color = when (tool.wearLevel) {
-                            1 -> Color.Green.copy(alpha = 0.2f)
-                            2 -> Color.Green.copy(alpha = 0.2f)
+                            1 -> Color(0xFF388E3C).copy(alpha = 0.2f)
+                            2 -> Color(0xFF388E3C).copy(alpha = 0.2f)
                             3 -> Color.Yellow.copy(alpha = 0.2f)
                             4 -> Color(0xFFFFA500).copy(alpha = 0.2f)
                             5 -> Color.Red.copy(alpha = 0.2f)
                             else -> Color.Gray.copy(alpha = 0.2f)
                         }
-                    ),
+                    )
+                    .clickable { onImageClick() },
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    Icons.Default.Build,
-                    contentDescription = null,
-                    modifier = Modifier.size(40.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
+                if (tool.imageUrl != null) {
+                    AsyncImage(
+                        model = tool.imageUrl,
+                        contentDescription = tool.name,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        Icons.Default.Build,
+                        contentDescription = null,
+                        modifier = Modifier.size(40.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .background(MaterialTheme.colorScheme.primary, CircleShape)
+                        .padding(4.dp)
+                ) {
+                    Icon(
+                        Icons.Default.PhotoCamera,
+                        contentDescription = "Выбрать фото",
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.width(16.dp))
@@ -217,8 +260,8 @@ private fun WearStatusSection(tool: Tool) {
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = when (tool.wearLevel) {
-                1 -> Color.Green.copy(alpha = 0.1f)
-                2 -> Color.Green.copy(alpha = 0.1f)
+                1 -> Color(0xFF388E3C).copy(alpha = 0.1f)
+                2 -> Color(0xFF388E3C).copy(alpha = 0.1f)
                 3 -> Color.Yellow.copy(alpha = 0.1f)
                 4 -> Color(0xFFFFA500).copy(alpha = 0.1f)
                 5 -> Color.Red.copy(alpha = 0.1f)
@@ -235,8 +278,8 @@ private fun WearStatusSection(tool: Tool) {
                     Icons.Default.Warning,
                     contentDescription = null,
                     tint = when (tool.wearLevel) {
-                        1 -> Color.Green
-                        2 -> Color.Green
+                        1 -> Color(0xFF388E3C)
+                        2 -> Color(0xFF388E3C)
                         3 -> Color.Yellow
                         4 -> Color(0xFFFFA500)
                         5 -> Color.Red
@@ -260,8 +303,8 @@ private fun WearStatusSection(tool: Tool) {
                 progress = { tool.wearLevel / 5f },
                 modifier = Modifier.fillMaxWidth(),
                 color = when (tool.wearLevel) {
-                    1 -> Color.Green
-                    2 -> Color.Green
+                    1 -> Color(0xFF388E3C)
+                    2 -> Color(0xFF388E3C)
                     3 -> Color.Yellow
                     4 -> Color(0xFFFFA500)
                     5 -> Color.Red
@@ -273,7 +316,7 @@ private fun WearStatusSection(tool: Tool) {
             Text(
                 if (tool.isAvailable()) "✅ Готов к работе" else "❌ Требует внимания",
                 fontWeight = FontWeight.Medium,
-                color = if (tool.isAvailable()) Color.Green else Color.Red
+                color = if (tool.isAvailable()) Color(0xFF388E3C) else Color.Red
             )
         }
     }

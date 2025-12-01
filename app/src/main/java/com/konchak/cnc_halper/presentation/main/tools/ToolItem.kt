@@ -6,9 +6,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.konchak.cnc_halper.domain.models.Tool
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -25,25 +27,34 @@ fun ToolItem(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(
-                modifier = Modifier.size(50.dp),
-                color = when (tool.wearLevel) {
-                    1 -> Color.Green
-                    2 -> Color.Yellow
-                    3 -> Color(0xFFFFA500)
-                    4 -> Color.Red
-                    else -> Color.Gray
-                },
-                shape = MaterialTheme.shapes.small
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center
+            if (tool.imageUrl != null) {
+                AsyncImage(
+                    model = tool.imageUrl,
+                    contentDescription = tool.name,
+                    modifier = Modifier.size(50.dp),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Surface(
+                    modifier = Modifier.size(50.dp),
+                    color = when (tool.wearLevel) {
+                        1 -> Color(0xFF388E3C)
+                        2 -> Color.Yellow
+                        3 -> Color(0xFFFFA500)
+                        4 -> Color.Red
+                        else -> Color.Gray
+                    },
+                    shape = MaterialTheme.shapes.small
                 ) {
-                    Text(
-                        tool.name.take(2).uppercase(),
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Box(
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            tool.name.take(2).uppercase(),
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
 

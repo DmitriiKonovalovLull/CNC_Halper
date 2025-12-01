@@ -1,0 +1,33 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp"
+    android:height="100dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+
+  <!-- Flower 1 -->
+  <path
+      android:fillColor="#4DE91E63"
+      android:pathData="M30,30 a5,5 0 1,1 -10,0 a5,5 0 1,1 10,0" />
+  <path
+      android:fillColor="#4DFFC107"
+      android:pathData="M25,25 a2,2 0 1,1 -4,0 a2,2 0 1,1 4,0" />
+
+  <!-- Flower 2 -->
+  <path
+      android:fillColor="#4D8BC34A"
+      android:pathData="M70,70 a8,8 0 1,1 -16,0 a8,8 0 1,1 16,0" />
+  <path
+      android:fillColor="#4DCDDC39"
+      android:pathData="M62,62 a3,3 0 1,1 -6,0 a3,3 0 1,1 6,0" />
+
+  <!-- Leaves -->
+  <path
+      android:strokeColor="#4D4CAF50"
+      android:strokeWidth="2"
+      android:pathData="M30,35 Q 35,40 40,35" />
+  <path
+      android:strokeColor="#4D4CAF50"
+      android:strokeWidth="2"
+      android:pathData="M70,75 Q 75,80 80,75" />
+
+</vector>

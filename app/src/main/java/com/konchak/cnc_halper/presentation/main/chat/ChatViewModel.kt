@@ -26,6 +26,9 @@ class ChatViewModel @Inject constructor(
     private val _chatState = MutableStateFlow(ChatState())
     val chatState: StateFlow<ChatState> = _chatState.asStateFlow()
 
+    private val _theme = MutableStateFlow(ChatTheme.SCIENTIFIC)
+    val theme: StateFlow<ChatTheme> = _theme.asStateFlow()
+
     private val currentOperatorId = 1L
 
     init {
@@ -35,9 +38,13 @@ class ChatViewModel @Inject constructor(
     fun onEvent(event: ChatEvent) {
         when (event) {
             is ChatEvent.SendMessage -> sendMessage(event.message)
+            is ChatEvent.TrainAI -> trainAI(event.question, event.answer, event.category)
+            is ChatEvent.TrainWithCurrentQuestion -> trainWithCurrentQuestion(event.answer, event.category)
             ChatEvent.ClearChatHistory -> clearChatHistory()
             ChatEvent.ClearError -> clearError()
             ChatEvent.RetryLoadHistory -> loadChatHistory()
+            is ChatEvent.UpdateTrainingAnswer -> updateTrainingAnswer(event.answer)
+            is ChatEvent.ChangeTheme -> _theme.value = event.theme
         }
     }
 
@@ -58,20 +65,51 @@ class ChatViewModel @Inject constructor(
 
             val aiResponse = withContext(Dispatchers.IO) {
                 try {
-                    aiRepository.processWithHybridAI(message)
+                    // Проверяем, знает ли ИИ ответ
+                    val knows = aiRepository.knowsAnswer(message)
+
+                    if (knows) {
+                        aiRepository.processWithHybridAI(message)
+                    } else {
+                        AIResponse.Success(
+                            answer = "Я пока не знаю как обработать '$message'. Научите меня?",
+                            confidence = 0.1f,
+                            source = "need_training"
+                        )
+                    }
                 } catch (e: Exception) {
                     AIResponse.Error("Ошибка: ${e.message ?: "Неизвестная ошибка"}")
                 }
             }
 
             val aiMessage = when (aiResponse) {
-                is AIResponse.Success -> ChatMessage(
-                    id = generateId(),
-                    message = aiResponse.answer,
-                    isUser = false,
-                    timestamp = System.currentTimeMillis(),
-                    messageType = MessageType.TEXT
-                )
+                is AIResponse.Success -> {
+                    if (aiResponse.source == "need_training") {
+                        // Сохраняем вопрос для возможного обучения
+                        _chatState.update {
+                            it.copy(
+                                pendingTrainingQuestion = message,
+                                showTrainingInput = true
+                            )
+                        }
+
+                        ChatMessage(
+                            id = generateId(),
+                            message = aiResponse.answer,
+                            isUser = false,
+                            timestamp = System.currentTimeMillis(),
+                            messageType = MessageType.NEED_TRAINING
+                        )
+                    } else {
+                        ChatMessage(
+                            id = generateId(),
+                            message = aiResponse.answer,
+                            isUser = false,
+                            timestamp = System.currentTimeMillis(),
+                            messageType = MessageType.AI_RESPONSE
+                        )
+                    }
+                }
                 is AIResponse.Error -> ChatMessage(
                     id = generateId(),
                     message = aiResponse.message,
@@ -90,6 +128,50 @@ class ChatViewModel @Inject constructor(
 
             saveChatToHistory(userMessage, aiMessage)
         }
+    }
+
+    fun trainAI(question: String, answer: String, category: String = "general") {
+        viewModelScope.launch {
+            try {
+                aiRepository.trainAI(question, answer, category)
+
+                // Добавляем системное сообщение
+                val systemMessage = ChatMessage(
+                    id = generateId(),
+                    message = "✅ Обучен! Теперь я знаю: '$question' → '$answer'",
+                    isUser = false,
+                    timestamp = System.currentTimeMillis(),
+                    messageType = MessageType.SYSTEM_MESSAGE
+                )
+
+                _chatState.update {
+                    it.copy(
+                        messages = it.messages + systemMessage,
+                        pendingTrainingQuestion = null,
+                        showTrainingInput = false,
+                        trainingAnswer = ""
+                    )
+                }
+
+                // Показываем статистику
+                val stats = aiRepository.getTrainingStats()
+                println("Статистика обучения: $stats")
+
+            } catch (e: Exception) {
+                _chatState.update { it.copy(error = "Ошибка обучения: ${e.message}") }
+            }
+        }
+    }
+
+    fun trainWithCurrentQuestion(answer: String, category: String = "general") {
+        val question = _chatState.value.pendingTrainingQuestion
+        if (question != null) {
+            trainAI(question, answer, category)
+        }
+    }
+
+    fun updateTrainingAnswer(answer: String) {
+        _chatState.update { it.copy(trainingAnswer = answer) }
     }
 
     fun clearChatHistory() {
@@ -170,11 +252,18 @@ class ChatViewModel @Inject constructor(
 data class ChatState(
     val messages: List<ChatMessage> = emptyList(),
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val pendingTrainingQuestion: String? = null, // Вопрос для обучения
+    val showTrainingInput: Boolean = false, // Показывать поле для обучения
+    val trainingAnswer: String = "" // Ответ для обучения
 )
 
 sealed class ChatEvent {
     data class SendMessage(val message: String) : ChatEvent()
+    data class TrainAI(val question: String, val answer: String, val category: String = "general") : ChatEvent()
+    data class TrainWithCurrentQuestion(val answer: String, val category: String = "general") : ChatEvent()
+    data class UpdateTrainingAnswer(val answer: String) : ChatEvent()
+    data class ChangeTheme(val theme: ChatTheme) : ChatEvent()
     object ClearChatHistory : ChatEvent()
     object ClearError : ChatEvent()
     object RetryLoadHistory : ChatEvent()
