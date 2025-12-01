@@ -17,6 +17,7 @@ import com.konchak.cnc_halper.presentation.main.machines.MachineListViewModel
 import com.konchak.cnc_halper.presentation.main.machines.MachineSettingsScreen
 import com.konchak.cnc_halper.presentation.main.machines.MachineStatsScreen
 import com.konchak.cnc_halper.presentation.main.profile.EditProfileScreen
+import com.konchak.cnc_halper.presentation.main.profile.KnowledgeManagementScreen
 import com.konchak.cnc_halper.presentation.main.profile.ProfileScreen
 import com.konchak.cnc_halper.presentation.main.profile.SettingsScreen
 import com.konchak.cnc_halper.presentation.main.tools.AddEditToolScreen
@@ -190,5 +191,8 @@ fun NavGraphBuilder.appGraph(navController: NavHostController) {
         ProfileScreen(
             onNavigate = { route -> navController.navigate(route) }
         )
+    }
+    composable("knowledge_management") {
+        KnowledgeManagementScreen(navController = navController)
     }
 }

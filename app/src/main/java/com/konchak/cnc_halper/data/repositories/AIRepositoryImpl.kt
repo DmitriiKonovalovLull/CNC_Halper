@@ -3,6 +3,7 @@ package com.konchak.cnc_halper.data.repositories
 import com.konchak.cnc_halper.core.ai.AIServiceManager
 import com.konchak.cnc_halper.core.ai.MiniAIEngine
 import com.konchak.cnc_halper.data.local.database.dao.AIKnowledgeDao
+import com.konchak.cnc_halper.data.local.database.entities.AIKnowledgeEntity
 import com.konchak.cnc_halper.domain.models.AIResponse
 import com.konchak.cnc_halper.domain.models.ai.MiniAIModel
 import com.konchak.cnc_halper.domain.repositories.AIRepository
@@ -17,22 +18,18 @@ class AIRepositoryImpl @Inject constructor(
 
     override suspend fun processWithHybridAI(message: String): AIResponse {
         return try {
-            // 1. Сначала ищем в локальной базе знаний
             val localKnowledge = aiKnowledgeDao.findSimilar(message)
-
             if (localKnowledge.isNotEmpty()) {
                 val bestMatch = localKnowledge.maxByOrNull { it.confidence }
                 return AIResponse.Success(
                     answer = bestMatch?.answer ?: "Не нашел точного ответа",
                     confidence = bestMatch?.confidence ?: 0.7f,
                     source = "knowledge_base",
-                    modelUsed = com.konchak.cnc_halper.domain.models.ai.AIModelType.Hybrid, // ИЗМЕНИЛ: было "local_knowledge_base"
+                    modelUsed = com.konchak.cnc_halper.domain.models.ai.AIModelType.Hybrid,
                     processingTime = 0L,
                     requiresSync = false
                 )
             }
-
-            // 2. Если не нашли в базе - используем существующую логику
             aiServiceManager.processQuery(message)
         } catch (e: Exception) {
             AIResponse.Error(
@@ -62,7 +59,6 @@ class AIRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getMiniAIModel(): MiniAIModel? {
-        // TODO: Реализовать получение модели
         return null
     }
 
@@ -75,41 +71,33 @@ class AIRepositoryImpl @Inject constructor(
     }
 
     override suspend fun updateMiniAIModel(model: MiniAIModel): Boolean {
-        // TODO: Реализовать обновление модели
         return true
     }
 
     override suspend fun syncAIModels(): Boolean {
-        // TODO: Реализовать синхронизацию моделей
         return true
     }
 
-    // НОВЫЙ МЕТОД: Обучение ИИ (сохранение знаний в базу)
     override suspend fun trainAI(question: String, answer: String, category: String) {
         try {
-            // Создаем сущность для сохранения
-            val knowledgeEntity = com.konchak.cnc_halper.data.local.database.entities.AIKnowledgeEntity(
+            val knowledgeEntity = AIKnowledgeEntity(
                 question = question,
                 answer = answer,
                 category = category,
                 confidence = 1.0f,
                 source = "operator_training"
             )
-
-            // Сохраняем в базу
             aiKnowledgeDao.insert(knowledgeEntity)
         } catch (e: Exception) {
             throw Exception("Ошибка при обучении ИИ: ${e.message}")
         }
     }
 
-    // НОВЫЙ МЕТОД: Получение статистики обучения
     override suspend fun getTrainingStats(): Map<String, Any> {
         return try {
             val allKnowledge = aiKnowledgeDao.getAll().first()
             val count = allKnowledge.size
             val byCategory = allKnowledge.groupBy { it.category }.mapValues { it.value.size }
-
             mapOf(
                 "total_examples" to count,
                 "by_category" to byCategory,
@@ -120,7 +108,6 @@ class AIRepositoryImpl @Inject constructor(
         }
     }
 
-    // НОВЫЙ МЕТОД: Поиск похожих вопросов
     override suspend fun findSimilarQuestions(query: String, limit: Int): List<String> {
         return try {
             val results = aiKnowledgeDao.findSimilar(query).take(limit)
@@ -132,8 +119,7 @@ class AIRepositoryImpl @Inject constructor(
 
     override suspend fun getKnowledgeBaseSize(): Int {
         return try {
-            val allKnowledge = aiKnowledgeDao.getAll().first()
-            allKnowledge.size
+            aiKnowledgeDao.getAll().first().size
         } catch (_: Exception) {
             0
         }
@@ -141,10 +127,25 @@ class AIRepositoryImpl @Inject constructor(
 
     override suspend fun knowsAnswer(question: String): Boolean {
         return try {
-            val similar = aiKnowledgeDao.findSimilar(question)
-            similar.isNotEmpty()
+            aiKnowledgeDao.findSimilar(question).isNotEmpty()
         } catch (_: Exception) {
             false
+        }
+    }
+
+    override suspend fun getAllKnowledge(): List<AIKnowledgeEntity> {
+        return try {
+            aiKnowledgeDao.getAll().first()
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    override suspend fun deleteKnowledge(knowledge: AIKnowledgeEntity) {
+        try {
+            aiKnowledgeDao.delete(knowledge)
+        } catch (e: Exception) {
+            throw Exception("Ошибка при удалении знания: ${e.message}")
         }
     }
 }

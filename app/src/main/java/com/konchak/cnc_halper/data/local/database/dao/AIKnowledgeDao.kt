@@ -12,6 +12,9 @@ interface AIKnowledgeDao {
     @Insert
     suspend fun insert(knowledge: AIKnowledgeEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(knowledge: List<AIKnowledgeEntity>)
+
     // 2. Найти похожие вопросы (поиск по ключевым словам)
     @Query("SELECT * FROM ai_knowledge WHERE question LIKE '%' || :keyword || '%'")
     suspend fun findSimilar(keyword: String): List<AIKnowledgeEntity>

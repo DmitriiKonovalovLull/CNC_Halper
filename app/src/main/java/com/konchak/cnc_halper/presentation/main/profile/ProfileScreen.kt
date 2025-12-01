@@ -8,22 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Help
-import androidx.compose.material.icons.filled.Assessment
-import androidx.compose.material.icons.filled.Assistant
-import androidx.compose.material.icons.filled.BatteryAlert
-import androidx.compose.material.icons.filled.BatteryFull
-import androidx.compose.material.icons.filled.BatteryStd
-import androidx.compose.material.icons.filled.CloudSync
-import androidx.compose.material.icons.filled.Fingerprint
-import androidx.compose.material.icons.filled.QrCodeScanner
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Sync
-import androidx.compose.material.icons.filled.Work
-import androidx.compose.material.icons.filled.MailOutline
-import androidx.compose.material.icons.filled.PersonAdd
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -31,13 +16,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource // Добавлен импорт для painterResource
-import com.konchak.cnc_halper.R // Добавлен импорт для R.drawable
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.konchak.cnc_halper.R
 import com.konchak.cnc_halper.domain.models.EnergyMode
 import com.konchak.cnc_halper.domain.models.Operator
 import com.konchak.cnc_halper.domain.models.SyncStatus
@@ -94,9 +79,52 @@ fun ProfileScreen(
             MessengerCard(
                 onMessengerClick = { /* TODO: Navigate to new chat messenger */ }
             )
+            AITrainingCard(
+                onTrainAIClick = { onNavigate("knowledge_management") },
+                onExportKnowledgeClick = { viewModel.exportKnowledge() }
+            )
         }
     }
 }
+
+@Composable
+private fun AITrainingCard(
+    onTrainAIClick: () -> Unit,
+    onExportKnowledgeClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "ОБУЧЕНИЕ ИИ",
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceAround
+            ) {
+                ActionButton(
+                    icon = Icons.Default.ModelTraining,
+                    text = "Управление\nзнаниями",
+                    onClick = onTrainAIClick
+                )
+                ActionButton(
+                    icon = Icons.Default.UploadFile,
+                    text = "Экспорт\nзнаний",
+                    onClick = onExportKnowledgeClick
+                )
+            }
+        }
+    }
+}
+
 
 @Composable
 private fun EnergyModeCard(

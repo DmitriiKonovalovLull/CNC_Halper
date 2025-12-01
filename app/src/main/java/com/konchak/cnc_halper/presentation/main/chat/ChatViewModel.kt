@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import kotlin.math.PI
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
@@ -31,6 +32,14 @@ class ChatViewModel @Inject constructor(
 
     private val currentOperatorId = 1L
 
+    private val cuttingSpeeds = mapOf(
+        "сталь" to 120.0,
+        "алюминий" to 300.0,
+        "чугун" to 100.0,
+        "нержавейка" to 80.0,
+        "титан" to 60.0
+    )
+
     init {
         loadChatHistory()
     }
@@ -38,12 +47,9 @@ class ChatViewModel @Inject constructor(
     fun onEvent(event: ChatEvent) {
         when (event) {
             is ChatEvent.SendMessage -> sendMessage(event.message)
-            is ChatEvent.TrainAI -> trainAI(event.question, event.answer, event.category)
-            is ChatEvent.TrainWithCurrentQuestion -> trainWithCurrentQuestion(event.answer, event.category)
             ChatEvent.ClearChatHistory -> clearChatHistory()
             ChatEvent.ClearError -> clearError()
             ChatEvent.RetryLoadHistory -> loadChatHistory()
-            is ChatEvent.UpdateTrainingAnswer -> updateTrainingAnswer(event.answer)
             is ChatEvent.ChangeTheme -> _theme.value = event.theme
         }
     }
@@ -63,16 +69,33 @@ class ChatViewModel @Inject constructor(
 
             _chatState.update { it.copy(messages = it.messages + userMessage) }
 
+            val calculationResult = handleCalculation(message)
+            if (calculationResult != null) {
+                val aiMessage = ChatMessage(
+                    id = generateId(),
+                    message = calculationResult,
+                    isUser = false,
+                    timestamp = System.currentTimeMillis(),
+                    messageType = MessageType.AI_RESPONSE
+                )
+                _chatState.update {
+                    it.copy(
+                        messages = it.messages + aiMessage,
+                        isLoading = false
+                    )
+                }
+                saveChatToHistory(userMessage, aiMessage)
+                return@launch
+            }
+
             val aiResponse = withContext(Dispatchers.IO) {
                 try {
-                    // Проверяем, знает ли ИИ ответ
                     val knows = aiRepository.knowsAnswer(message)
-
                     if (knows) {
                         aiRepository.processWithHybridAI(message)
                     } else {
                         AIResponse.Success(
-                            answer = "Я пока не знаю как обработать '$message'. Научите меня?",
+                            answer = "Я пока не знаю ответ. Вы можете научить меня в разделе 'Управление знаниями' в профиле.",
                             confidence = 0.1f,
                             source = "need_training"
                         )
@@ -83,33 +106,13 @@ class ChatViewModel @Inject constructor(
             }
 
             val aiMessage = when (aiResponse) {
-                is AIResponse.Success -> {
-                    if (aiResponse.source == "need_training") {
-                        // Сохраняем вопрос для возможного обучения
-                        _chatState.update {
-                            it.copy(
-                                pendingTrainingQuestion = message,
-                                showTrainingInput = true
-                            )
-                        }
-
-                        ChatMessage(
-                            id = generateId(),
-                            message = aiResponse.answer,
-                            isUser = false,
-                            timestamp = System.currentTimeMillis(),
-                            messageType = MessageType.NEED_TRAINING
-                        )
-                    } else {
-                        ChatMessage(
-                            id = generateId(),
-                            message = aiResponse.answer,
-                            isUser = false,
-                            timestamp = System.currentTimeMillis(),
-                            messageType = MessageType.AI_RESPONSE
-                        )
-                    }
-                }
+                is AIResponse.Success -> ChatMessage(
+                    id = generateId(),
+                    message = aiResponse.answer,
+                    isUser = false,
+                    timestamp = System.currentTimeMillis(),
+                    messageType = if (aiResponse.source == "need_training") MessageType.NEED_TRAINING else MessageType.AI_RESPONSE
+                )
                 is AIResponse.Error -> ChatMessage(
                     id = generateId(),
                     message = aiResponse.message,
@@ -130,48 +133,87 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    fun trainAI(question: String, answer: String, category: String = "general") {
-        viewModelScope.launch {
-            try {
-                aiRepository.trainAI(question, answer, category)
+    private fun handleCalculation(message: String): String? {
+        val lowerCaseMessage = message.lowercase()
 
-                // Добавляем системное сообщение
-                val systemMessage = ChatMessage(
-                    id = generateId(),
-                    message = "✅ Обучен! Теперь я знаю: '$question' → '$answer'",
-                    isUser = false,
-                    timestamp = System.currentTimeMillis(),
-                    messageType = MessageType.SYSTEM_MESSAGE
-                )
+        if ("обороты" in lowerCaseMessage || "рассчитай обороты" in lowerCaseMessage) {
+            val diameter = findDiameter(lowerCaseMessage)
+            val material = findMaterial(lowerCaseMessage)
 
-                _chatState.update {
-                    it.copy(
-                        messages = it.messages + systemMessage,
-                        pendingTrainingQuestion = null,
-                        showTrainingInput = false,
-                        trainingAnswer = ""
-                    )
-                }
+            if (diameter == null) {
+                return "Не могу найти диаметр инструмента в вашем запросе. Пожалуйста, укажите диаметр в мм (например, 'фреза 10мм')."
+            }
+            if (material == null) {
+                return "Не могу найти материал. Пожалуйста, укажите материал (например, 'по алюминию'). Я знаю: ${cuttingSpeeds.keys.joinToString(", ")}."
+            }
 
-                // Показываем статистику
-                val stats = aiRepository.getTrainingStats()
-                println("Статистика обучения: $stats")
+            val cuttingSpeed = cuttingSpeeds[material]
+            if (cuttingSpeed == null) {
+                return "Я не знаю рекомендуемую скорость резания для материала '$material'. Я знаю: ${cuttingSpeeds.keys.joinToString(", ")}."
+            }
 
-            } catch (e: Exception) {
-                _chatState.update { it.copy(error = "Ошибка обучения: ${e.message}") }
+            val rpm = calculateRpm(diameter, cuttingSpeed)
+            return "Для диаметра $diameter мм и материала '$material' (V_c = $cuttingSpeed м/мин), рекомендуемые обороты: ${rpm.toInt()} об/мин."
+        }
+
+        if ("подача" in lowerCaseMessage) {
+            val rpm = "обороты\\s*(\\d+\\.?\\d*)".toRegex().find(lowerCaseMessage)?.groupValues?.get(1)?.toDoubleOrNull()
+            val feedPerTooth = "подача на зуб\\s*(\\d+\\.?\\d*)".toRegex().find(lowerCaseMessage)?.groupValues?.get(1)?.toDoubleOrNull()
+            val teeth = "количество зубьев\\s*(\\d+)".toRegex().find(lowerCaseMessage)?.groupValues?.get(1)?.toIntOrNull()
+            if (rpm != null && feedPerTooth != null && teeth != null) {
+                val feedRate = calculateFeedRate(rpm, feedPerTooth, teeth)
+                return "Подача: ${feedRate.toInt()} мм/мин"
+            } else {
+                return "Для расчета подачи укажите обороты, подачу на зуб и количество зубьев."
             }
         }
-    }
 
-    fun trainWithCurrentQuestion(answer: String, category: String = "general") {
-        val question = _chatState.value.pendingTrainingQuestion
-        if (question != null) {
-            trainAI(question, answer, category)
+        if ("скорость резания" in lowerCaseMessage) {
+            val diameter = findDiameter(lowerCaseMessage)
+            val rpm = "обороты\\s*(\\d+\\.?\\d*)".toRegex().find(lowerCaseMessage)?.groupValues?.get(1)?.toDoubleOrNull()
+            if (diameter != null && rpm != null) {
+                val speed = calculateCuttingSpeed(diameter, rpm)
+                return "Скорость резания: ${"%.2f".format(speed)} м/мин"
+            } else {
+                return "Для расчета скорости резания укажите диаметр и обороты."
+            }
         }
+
+        return null
     }
 
-    fun updateTrainingAnswer(answer: String) {
-        _chatState.update { it.copy(trainingAnswer = answer) }
+    private fun findDiameter(text: String): Double? {
+        val regexPatterns = listOf(
+            """(\d+\.?\d*)\s*мм""".toRegex(),
+            """диаметр\s*(\d+\.?\d*)""".toRegex(),
+            """(фрез[аы]|сверл[ао]|метчик[аи]?)\s*(\d+\.?\d*)""".toRegex()
+        )
+
+        for (pattern in regexPatterns) {
+            val match = pattern.find(text)
+            if (match != null) {
+                val groupIndex = if (pattern.pattern.contains("фрез")) 2 else 1
+                return match.groupValues.getOrNull(groupIndex)?.toDoubleOrNull()
+            }
+        }
+        return null
+    }
+
+    private fun findMaterial(text: String): String? {
+        return cuttingSpeeds.keys.find { "по $it" in text || "для $it" in text || it in text }
+    }
+
+    private fun calculateRpm(diameter: Double, cuttingSpeed: Double): Double {
+        if (diameter == 0.0) return 0.0
+        return (cuttingSpeed * 1000) / (PI * diameter)
+    }
+
+    private fun calculateCuttingSpeed(diameter: Double, rpm: Double): Double {
+        return (diameter * PI * rpm) / 1000
+    }
+
+    private fun calculateFeedRate(rpm: Double, feedPerTooth: Double, teeth: Int): Double {
+        return rpm * feedPerTooth * teeth
     }
 
     fun clearChatHistory() {
@@ -179,7 +221,6 @@ class ChatViewModel @Inject constructor(
             try {
                 chatRepository.clearChatHistory(currentOperatorId)
                 _chatState.update { it.copy(messages = emptyList()) }
-
                 val systemMessage = ChatMessage(
                     id = generateId(),
                     message = "История чата очищена",
@@ -188,7 +229,6 @@ class ChatViewModel @Inject constructor(
                     messageType = MessageType.SYSTEM_MESSAGE
                 )
                 _chatState.update { it.copy(messages = it.messages + systemMessage) }
-
             } catch (e: Exception) {
                 _chatState.update { it.copy(error = "Ошибка очистки: ${e.message}") }
             }
@@ -252,17 +292,11 @@ class ChatViewModel @Inject constructor(
 data class ChatState(
     val messages: List<ChatMessage> = emptyList(),
     val isLoading: Boolean = false,
-    val error: String? = null,
-    val pendingTrainingQuestion: String? = null, // Вопрос для обучения
-    val showTrainingInput: Boolean = false, // Показывать поле для обучения
-    val trainingAnswer: String = "" // Ответ для обучения
+    val error: String? = null
 )
 
 sealed class ChatEvent {
     data class SendMessage(val message: String) : ChatEvent()
-    data class TrainAI(val question: String, val answer: String, val category: String = "general") : ChatEvent()
-    data class TrainWithCurrentQuestion(val answer: String, val category: String = "general") : ChatEvent()
-    data class UpdateTrainingAnswer(val answer: String) : ChatEvent()
     data class ChangeTheme(val theme: ChatTheme) : ChatEvent()
     object ClearChatHistory : ChatEvent()
     object ClearError : ChatEvent()
