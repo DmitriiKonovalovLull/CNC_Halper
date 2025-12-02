@@ -18,9 +18,7 @@ import com.konchak.cnc_halper.presentation.main.machines.MachineSettingsScreen
 import com.konchak.cnc_halper.presentation.main.machines.MachineStatsScreen
 import com.konchak.cnc_halper.presentation.main.profile.*
 import com.konchak.cnc_halper.presentation.main.tools.*
-import com.konchak.cnc_halper.presentation.main.works.AddWorkScreen
-import com.konchak.cnc_halper.presentation.main.works.MyWorksScreen
-import com.konchak.cnc_halper.presentation.main.works.MyWorksViewModel
+import com.konchak.cnc_halper.presentation.main.works.*
 import com.konchak.cnc_halper.presentation.onboarding.EquipmentSetupScreen
 import com.konchak.cnc_halper.presentation.onboarding.RoleSelectionScreen
 import com.konchak.cnc_halper.presentation.onboarding.TutorialScreen
@@ -171,6 +169,12 @@ fun NavGraphBuilder.appGraph(navController: NavHostController) {
     composable(Screen.AddWork.route) {
         val viewModel: MyWorksViewModel = hiltViewModel()
         AddWorkScreen(navController = navController, viewModel = viewModel)
+    }
+    composable(
+        "work_detail/{workId}",
+        arguments = listOf(navArgument("workId") { type = NavType.StringType })
+    ) {
+        WorkDetailScreen(navController = navController)
     }
 
     // Other screens

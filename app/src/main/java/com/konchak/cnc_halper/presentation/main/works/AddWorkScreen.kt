@@ -21,7 +21,7 @@ fun AddWorkScreen(
     var workName by remember { mutableStateOf("") }
     var workDescription by remember { mutableStateOf("") }
     var isGostProject by remember { mutableStateOf(false) }
-    var gostType by remember { mutableStateOf("") }
+    var gostStandards by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -68,9 +68,9 @@ fun AddWorkScreen(
             }
             if (isGostProject) {
                 OutlinedTextField(
-                    value = gostType,
-                    onValueChange = { gostType = it },
-                    label = { Text("Тип ГОСТа (например, ГОСТ 2.104-2006)") },
+                    value = gostStandards,
+                    onValueChange = { gostStandards = it },
+                    label = { Text("ГОСТы (через запятую)") },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -81,7 +81,7 @@ fun AddWorkScreen(
                         name = workName,
                         description = workDescription,
                         isGostProject = isGostProject,
-                        gostType = if (isGostProject) gostType else null,
+                        gostStandards = if (isGostProject) gostStandards.split(",").map { it.trim() } else emptyList(),
                         startDate = System.currentTimeMillis()
                     )
                     viewModel.addWork(newWork)

@@ -1,61 +1,65 @@
 package com.konchak.cnc_halper.presentation.main
 
-import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Business
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.konchak.cnc_halper.presentation.navigation.Screen
 import com.konchak.cnc_halper.presentation.navigation.appGraph
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
     val navController = rememberNavController()
-    val currentBackStack by navController.currentBackStackEntryAsState()
-    val currentDestination = currentBackStack?.destination
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
 
     val screens = listOf(
-        Screen.MachineList,
-        Screen.ToolList,
         Screen.MyWorks,
         Screen.Chat,
-        Screen.Profile
+        Screen.MachineList,
+        Screen.ToolList
     )
 
-    Scaffold(
-        bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer, // Use a slightly different background for the bar
-                tonalElevation = 5.dp // Add some shadow
-            ) {
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet {
+                DrawerHeader {
+                    scope.launch {
+                        drawerState.close()
+                    }
+                    navController.navigate(Screen.Profile.route)
+                }
+                Spacer(modifier = Modifier.height(12.dp))
                 screens.forEach { screen ->
-                    val selected = currentDestination?.route == screen.route
-                    NavigationBarItem(
+                    NavigationDrawerItem(
                         icon = {
                             Icon(
                                 imageVector = when (screen) {
+                                    Screen.MyWorks -> Icons.AutoMirrored.Filled.List
+                                    Screen.Chat -> Icons.AutoMirrored.Filled.Chat
                                     Screen.MachineList -> Icons.Default.Business
                                     Screen.ToolList -> Icons.Default.Build
-                                    Screen.MyWorks -> Icons.AutoMirrored.Filled.List // Changed to AutoMirrored.Filled.List
-                                    Screen.Chat -> Icons.AutoMirrored.Filled.Chat
-                                    Screen.Profile -> Icons.Default.Person
                                     else -> Icons.Default.Person
                                 },
                                 contentDescription = null
@@ -64,17 +68,19 @@ fun MainScreen() {
                         label = {
                             Text(
                                 text = when (screen) {
-                                    Screen.MachineList -> "Станки"
-                                    Screen.ToolList -> "Инструменты"
                                     Screen.MyWorks -> "Работы"
                                     Screen.Chat -> "Чат"
-                                    Screen.Profile -> "Профиль"
-                                    else -> "Профиль"
+                                    Screen.MachineList -> "Станки"
+                                    Screen.ToolList -> "Инструменты"
+                                    else -> ""
                                 }
                             )
                         },
-                        selected = selected,
+                        selected = currentRoute == screen.route,
                         onClick = {
+                            scope.launch {
+                                drawerState.close()
+                            }
                             navController.navigate(screen.route) {
                                 popUpTo(navController.graph.startDestinationId) {
                                     saveState = true
@@ -82,37 +88,85 @@ fun MainScreen() {
                                 launchSingleTop = true
                                 restoreState = true
                             }
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                            selectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            indicatorColor = MaterialTheme.colorScheme.secondaryContainer
-                        )
+                        }
                     )
                 }
+                Divider(modifier = Modifier.padding(vertical = 16.dp))
+                NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.Settings, contentDescription = null) },
+                    label = { Text("Настройки") },
+                    selected = false,
+                    onClick = {
+                        scope.launch {
+                            drawerState.close()
+                        }
+                        navController.navigate(Screen.Settings.route)
+                    }
+                )
             }
         }
-    ) { paddingValues ->
-        NavHost(
-            navController = navController,
-            startDestination = Screen.MachineList.route,
-            modifier = Modifier.padding(paddingValues),
-            enterTransition = {
-                slideInHorizontally(animationSpec = tween(600)) { it / 2 } + fadeIn(animationSpec = tween(600))
-            },
-            exitTransition = {
-                slideOutHorizontally(animationSpec = tween(600)) { -it / 2 } + fadeOut(animationSpec = tween(600))
-            },
-            popEnterTransition = {
-                slideInHorizontally(animationSpec = tween(600)) { -it / 2 } + fadeIn(animationSpec = tween(600))
-            },
-            popExitTransition = {
-                slideOutHorizontally(animationSpec = tween(600)) { it / 2 } + fadeOut(animationSpec = tween(600))
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("CNC Helper") },
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            scope.launch {
+                                drawerState.apply {
+                                    if (isClosed) open() else close()
+                                }
+                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "Меню"
+                            )
+                        }
+                    }
+                )
             }
+        ) { paddingValues ->
+            NavHost(
+                navController = navController,
+                startDestination = Screen.MyWorks.route,
+                modifier = Modifier.padding(paddingValues)
+            ) {
+                appGraph(navController)
+            }
+        }
+    }
+}
+
+@Composable
+private fun DrawerHeader(onProfileClick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.primary)
+            .padding(16.dp)
+            .clickable(onClick = onProfileClick),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier
+                .size(80.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.onPrimary),
+            contentAlignment = Alignment.Center
         ) {
-            appGraph(navController)
+            Text(
+                text = "ОП",
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold,
+                fontSize = 24.sp
+            )
         }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Оператор",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onPrimary
+        )
     }
 }

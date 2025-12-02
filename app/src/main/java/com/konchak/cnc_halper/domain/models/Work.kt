@@ -15,8 +15,10 @@ data class Work(
     val endDate: Long? = null,
     val status: WorkStatus = WorkStatus.IN_PROGRESS,
     val operatorId: String = "",
-    val isGostProject: Boolean = false, // New field for GOST projects
-    val gostType: String? = null // New field for GOST type
+    val isGostProject: Boolean = false,
+    val gostStandards: List<String> = emptyList(), // Замена gostType на список
+    val drawingUrl: String? = null, // URL чертежа
+    val operatorNotes: String = "" // Примечания оператора
 )
 
 enum class WorkStatus {
