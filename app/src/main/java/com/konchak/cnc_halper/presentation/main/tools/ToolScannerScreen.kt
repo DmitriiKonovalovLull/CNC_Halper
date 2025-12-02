@@ -3,6 +3,8 @@ package com.konchak.cnc_halper.presentation.main.tools
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountTree
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,11 +24,9 @@ fun ToolScannerScreen(
     val state by viewModel.state.collectAsState()
     val navigationEvent by viewModel.navigationEvent.collectAsState()
 
-    // ✅ ДОБАВЛЯЕМ: Обработка навигации
     LaunchedEffect(navigationEvent) {
         when (navigationEvent) {
             "tool_saved" -> {
-                // Возвращаемся к списку инструментов
                 navController.popBackStack()
                 viewModel.clearNavigation()
             }
@@ -38,6 +38,9 @@ fun ToolScannerScreen(
             CenterAlignedTopAppBar(
                 title = { Text("Сканер инструментов") },
                 actions = {
+                    IconButton(onClick = { navController.navigate("scan_history") }) {
+                        Icon(Icons.Default.AccountTree, contentDescription = "История сканирования")
+                    }
                     IconButton(onClick = { viewModel.onEvent(ToolScannerEvent.ToggleFlash) }) {
                         Text(
                             text = if (state.isFlashOn) "💡" else "🔦",
@@ -76,7 +79,6 @@ fun ToolScannerScreen(
                 }
             }
 
-            // Результаты сканирования
             if (state.scanResult != null) {
                 ScanResultCard(
                     scanResult = state.scanResult!!,
@@ -86,7 +88,6 @@ fun ToolScannerScreen(
                 )
             }
 
-            // Управление камерой
             CameraControls(
                 state = state,
                 onEvent = viewModel::onEvent,
@@ -96,7 +97,6 @@ fun ToolScannerScreen(
             )
         }
         
-        // ✅ ДОБАВЛЯЕМ: Уведомление об успешном сохранении
         if (state.isSaved) {
             LaunchedEffect(Unit) {
                 // Можно показать Snackbar или другое уведомление
@@ -108,13 +108,12 @@ fun ToolScannerScreen(
 @Composable
 fun CameraPreviewSection(
     state: ToolScannerState,
-    modifier: Modifier = Modifier // Removed onEvent parameter
+    modifier: Modifier = Modifier
 ) {
     Box(
         modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
-        // Здесь будет Preview камеры
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -142,7 +141,6 @@ fun CameraPreviewSection(
             }
         }
 
-        // Перекрестие для наведения
         if (!state.isAnalyzing) {
             Text(
                 text = "➕",
@@ -164,7 +162,6 @@ fun CameraControls(
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Кнопка выбора из галереи
         IconButton(
             onClick = { onEvent(ToolScannerEvent.PickFromGallery) },
             enabled = !state.isAnalyzing
@@ -175,7 +172,6 @@ fun CameraControls(
             }
         }
 
-        // Кнопка съемки
         IconButton(
             onClick = { onEvent(ToolScannerEvent.CaptureImage) },
             enabled = !state.isAnalyzing
@@ -197,7 +193,6 @@ fun CameraControls(
             }
         }
 
-        // Кнопка настроек
         IconButton(
             onClick = { onEvent(ToolScannerEvent.OpenSettings) },
             enabled = !state.isAnalyzing
@@ -227,7 +222,6 @@ fun ScanResultCard(
                 style = MaterialTheme.typography.titleMedium
             )
 
-            // Предпросмотр изображения
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -244,7 +238,6 @@ fun ScanResultCard(
                 }
             }
 
-            // Информация о сканировании
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -261,7 +254,6 @@ fun ScanResultCard(
                 Text(scanResult.imageSize, style = MaterialTheme.typography.bodyMedium)
             }
 
-            // Действия
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)

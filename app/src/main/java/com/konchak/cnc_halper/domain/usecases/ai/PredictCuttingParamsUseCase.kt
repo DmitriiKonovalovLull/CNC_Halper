@@ -109,12 +109,13 @@ class PredictCuttingParamsUseCase @Inject constructor(
     private fun parseCuttingParamsFromResponse(
         response: String,
         material: String,
-        toolType: String, // ИЗМЕНЕНО: убрал @Suppress("unused")
+        toolType: String,
         operation: String,
         workpieceDiameter: Float,
         toolDiameter: Float,
         turningLength: Float
     ): CuttingParameters {
+        println("Parsing response for toolType: $toolType") // Используем параметр
         val cuttingToolType = detectToolType(toolType)
         val cuttingSpeed = extractValue(response, "cutting speed", getDefaultSpeed(material, cuttingToolType))
         val feedRate = extractValue(response, "feed", getDefaultFeed(toolType, cuttingToolType))

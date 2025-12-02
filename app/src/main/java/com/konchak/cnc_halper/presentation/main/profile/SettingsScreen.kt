@@ -1,9 +1,11 @@
 package com.konchak.cnc_halper.presentation.main.profile
 
 import android.app.Activity
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -18,7 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.konchak.cnc_halper.R // Import R for string resources
+import com.konchak.cnc_halper.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,16 +30,15 @@ fun SettingsScreen(
 ) {
     val isDarkMode by viewModel.isDarkMode.collectAsState()
     val selectedLanguage by viewModel.selectedLanguage.collectAsState()
-    // val context = LocalContext.current // Removed unused variable
     val activity = (LocalContext.current as? Activity)
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(stringResource(R.string.machine_settings)) }, // Use string resource
+                title = { Text(stringResource(R.string.machine_settings)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) // Use string resource
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back))
                     }
                 }
             )
@@ -54,7 +55,7 @@ fun SettingsScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = stringResource(R.string.dark_theme)) // Use string resource
+                Text(text = stringResource(R.string.dark_theme))
                 Switch(
                     checked = isDarkMode,
                     onCheckedChange = { viewModel.toggleDarkMode(it) }
@@ -62,7 +63,6 @@ fun SettingsScreen(
             }
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Language selection
             var expanded by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
                 expanded = expanded,
@@ -93,7 +93,7 @@ fun SettingsScreen(
                         onClick = {
                             if (selectedLanguage != "ru") {
                                 viewModel.setLanguage("ru")
-                                activity?.recreate() // Recreate activity to apply language change
+                                activity?.recreate()
                             }
                             expanded = false
                         }
@@ -103,12 +103,23 @@ fun SettingsScreen(
                         onClick = {
                             if (selectedLanguage != "en") {
                                 viewModel.setLanguage("en")
-                                activity?.recreate() // Recreate activity to apply language change
+                                activity?.recreate()
                             }
                             expanded = false
                         }
                     )
                 }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { navController.navigate("instruction") },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = "Инструкция к использованию")
+                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
             }
         }
     }

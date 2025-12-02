@@ -7,9 +7,8 @@ import javax.inject.Inject
 class FallbackToMiniAIUseCase @Inject constructor(
     private val aiRepository: AIRepository
 ) {
-    suspend operator fun invoke(originalMessage: String, @Suppress("unused") cloudError: Exception): AIResponse { // Added @Suppress("unused") back
-        // In a real scenario, you might log the cloudError or use it for specific fallback logic.
-        // For now, we just fall back to MiniAI.
+    suspend operator fun invoke(originalMessage: String, cloudError: Exception): AIResponse {
+        println("Cloud AI failed, falling back to MiniAI. Error: ${cloudError.message}") // Используем параметр
         return aiRepository.processWithMiniAI(originalMessage)
     }
 }

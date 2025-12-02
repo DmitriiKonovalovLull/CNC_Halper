@@ -32,6 +32,7 @@ import com.konchak.cnc_halper.domain.models.Tool
 import com.konchak.cnc_halper.domain.models.ToolUsageRecord
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,12 +46,10 @@ fun ToolDetailScreen(
     val errorMessage by viewModel.errorMessage.collectAsState()
     val navigationEvent by viewModel.navigationEvent.collectAsState()
 
-    // Загрузка инструмента при инициализации
     LaunchedEffect(toolId) {
         toolId?.let { viewModel.loadTool(it) }
     }
 
-    // Обработка навигации
     LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->
             when {
@@ -141,7 +140,12 @@ private fun ToolDetailContent(
             imagePickerLauncher.launch("image/*")
         }
         ToolParametersSection(tool)
-        WearStatusSection(tool)
+        WearStatusSection(
+            tool = tool,
+            onWearLevelChange = { newLevel ->
+                viewModel.updateWearLevel(tool.id, newLevel)
+            }
+        )
         UsageHistorySection(tool.usageHistory)
         ActionsSection(
             tool = tool,
@@ -164,14 +168,7 @@ private fun ToolHeaderSection(tool: Tool, onImageClick: () -> Unit) {
                     .size(80.dp)
                     .clip(CircleShape)
                     .background(
-                        color = when (tool.wearLevel) {
-                            1 -> Color(0xFF388E3C).copy(alpha = 0.2f)
-                            2 -> Color(0xFF388E3C).copy(alpha = 0.2f)
-                            3 -> Color.Yellow.copy(alpha = 0.2f)
-                            4 -> Color(0xFFFFA500).copy(alpha = 0.2f)
-                            5 -> Color.Red.copy(alpha = 0.2f)
-                            else -> Color.Gray.copy(alpha = 0.2f)
-                        }
+                        color = getWearColor(tool.wearLevel).copy(alpha = 0.2f)
                     )
                     .clickable { onImageClick() },
                 contentAlignment = Alignment.Center
@@ -210,7 +207,7 @@ private fun ToolHeaderSection(tool: Tool, onImageClick: () -> Unit) {
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(tool.name, fontWeight = FontWeight.Bold, fontSize = 24.sp)
-                Text(tool.type.displayName, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 16.sp) // Use displayName
+                Text(tool.type.displayName, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 16.sp)
                 Text("Размер: ${tool.getSizeString()}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
                 Text("ID: ${tool.id}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
             }
@@ -230,14 +227,7 @@ private fun ToolParametersSection(tool: Tool) {
             ParameterRow("Длина", "${tool.length} мм")
             ParameterRow("Материал", tool.material)
             ParameterRow("Покрытие", tool.coating)
-            ParameterRow("Статус", when (tool.status) {
-                "active" -> "Активный"
-                "needs_replacement" -> "Требует замены"
-                "worn" -> "Изношен"
-                "broken" -> "Сломан"
-                "maintenance" -> "На обслуживании"
-                else -> tool.status
-            })
+            ParameterRow("Статус", tool.status.replaceFirstChar { it.uppercase() })
             ParameterRow("Станок", tool.machineId ?: "Не назначен")
         }
     }
@@ -255,18 +245,11 @@ private fun ParameterRow(label: String, value: String) {
 }
 
 @Composable
-private fun WearStatusSection(tool: Tool) {
+private fun WearStatusSection(tool: Tool, onWearLevelChange: (Int) -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = when (tool.wearLevel) {
-                1 -> Color(0xFF388E3C).copy(alpha = 0.1f)
-                2 -> Color(0xFF388E3C).copy(alpha = 0.1f)
-                3 -> Color.Yellow.copy(alpha = 0.1f)
-                4 -> Color(0xFFFFA500).copy(alpha = 0.1f)
-                5 -> Color.Red.copy(alpha = 0.1f)
-                else -> Color.Gray.copy(alpha = 0.1f)
-            }
+            containerColor = getWearColor(tool.wearLevel).copy(alpha = 0.1f)
         )
     ) {
         Column(
@@ -277,14 +260,7 @@ private fun WearStatusSection(tool: Tool) {
                 Icon(
                     Icons.Default.Warning,
                     contentDescription = null,
-                    tint = when (tool.wearLevel) {
-                        1 -> Color(0xFF388E3C)
-                        2 -> Color(0xFF388E3C)
-                        3 -> Color.Yellow
-                        4 -> Color(0xFFFFA500)
-                        5 -> Color.Red
-                        else -> Color.Gray
-                    }
+                    tint = getWearColor(tool.wearLevel)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
@@ -299,18 +275,17 @@ private fun WearStatusSection(tool: Tool) {
                 fontWeight = FontWeight.Medium
             )
 
-            LinearProgressIndicator(
-                progress = { tool.wearLevel / 5f },
+            Slider(
+                value = tool.wearLevel.toFloat(),
+                onValueChange = { onWearLevelChange(it.roundToInt()) },
+                valueRange = 1f..5f,
+                steps = 3,
                 modifier = Modifier.fillMaxWidth(),
-                color = when (tool.wearLevel) {
-                    1 -> Color(0xFF388E3C)
-                    2 -> Color(0xFF388E3C)
-                    3 -> Color.Yellow
-                    4 -> Color(0xFFFFA500)
-                    5 -> Color.Red
-                    else -> Color.Gray
-                },
-                trackColor = Color.LightGray.copy(alpha = 0.4f)
+                colors = SliderDefaults.colors(
+                    thumbColor = getWearColor(tool.wearLevel),
+                    activeTrackColor = getWearColor(tool.wearLevel),
+                    inactiveTrackColor = Color.LightGray.copy(alpha = 0.4f)
+                )
             )
 
             Text(
@@ -492,5 +467,16 @@ private fun EmptyState() {
         Text("Инструмент не найден", fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
         Text("Попробуйте выбрать другой инструмент", color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+private fun getWearColor(wearLevel: Int): Color {
+    return when (wearLevel) {
+        1 -> Color(0xFF388E3C)
+        2 -> Color(0xFF388E3C)
+        3 -> Color.Yellow
+        4 -> Color(0xFFFFA500)
+        5 -> Color.Red
+        else -> Color.Gray
     }
 }

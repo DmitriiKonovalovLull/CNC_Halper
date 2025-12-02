@@ -20,7 +20,6 @@ class ToolScannerViewModel @Inject constructor(
     private val _state = MutableStateFlow(ToolScannerState())
     val state: StateFlow<ToolScannerState> = _state
 
-    // ✅ ДОБАВЛЯЕМ: События навигации
     private val _navigationEvent = MutableStateFlow<String?>(null)
     val navigationEvent: StateFlow<String?> = _navigationEvent
 
@@ -37,9 +36,8 @@ class ToolScannerViewModel @Inject constructor(
     }
 
     private fun requestPermission() {
-        // TODO: Логика запроса разрешения камеры
         _state.value = _state.value.copy(
-            hasCameraPermission = true // временно для теста
+            hasCameraPermission = true
         )
     }
 
@@ -53,16 +51,15 @@ class ToolScannerViewModel @Inject constructor(
         _state.value = _state.value.copy(isAnalyzing = true)
         
         viewModelScope.launch {
-            // Имитация сканирования - 2 секунды
             kotlinx.coroutines.delay(2000)
             
-            // ✅ ФИКС: СОЗДАЕМ РЕАЛЬНЫЙ ScanResult для сохранения
             _state.value = _state.value.copy(
                 isAnalyzing = false,
                 scanResult = ScanResult(
                     imagePath = "/temp/scanned_tool_${System.currentTimeMillis()}.jpg",
                     quality = 85,
-                    imageSize = "2.3 MB"
+                    imageSize = "2.3 MB",
+                    toolId = null // Пока нет toolId
                 )
             )
             
@@ -71,24 +68,22 @@ class ToolScannerViewModel @Inject constructor(
     }
 
     private fun pickFromGallery() {
-        // TODO: Выбор из галереи
         _state.value = _state.value.copy(
             scanResult = ScanResult(
                 imagePath = "/gallery/tool_image.jpg", 
                 quality = 90,
-                imageSize = "1.8 MB"
+                imageSize = "1.8 MB",
+                toolId = null // Пока нет toolId
             )
         )
     }
 
     private fun analyzeTool() {
-        // TODO: AI анализ инструмента
         _state.value = _state.value.copy(isAnalyzing = true)
         
         viewModelScope.launch {
             kotlinx.coroutines.delay(1500)
             _state.value = _state.value.copy(isAnalyzing = false)
-            // Здесь можно обновить scanResult с анализом
         }
     }
 
@@ -102,11 +97,11 @@ class ToolScannerViewModel @Inject constructor(
             if (currentScan != null) {
                 println("🛠️ DEBUG: Создаем инструмент...")
                 
-                // ✅ ФИКС: СОЗДАЕМ ПОЛНЫЙ ИНСТРУМЕНТ
+                val newToolId = System.currentTimeMillis().toString()
                 val tool = Tool(
-                    id = System.currentTimeMillis().toString(),
-                    name = "Сканированная фреза ${System.currentTimeMillis()}",
-                    type = ToolType.END_MILL, // Changed to ToolType enum
+                    id = newToolId,
+                    name = "Сканированная фреза $newToolId",
+                    type = ToolType.END_MILL,
                     diameter = 12.0f,
                     length = 50.0f,
                     material = "Твердый сплав",
@@ -122,10 +117,9 @@ class ToolScannerViewModel @Inject constructor(
                     toolRepository.addTool(tool)
                     println("🛠️ DEBUG: ✅ Инструмент сохранен успешно!")
                     
-                    // ✅ ФИКС: ОЧИЩАЕМ И ПЕРЕХОДИМ
                     _state.value = _state.value.copy(
                         isSaved = true,
-                        scanResult = null
+                        scanResult = currentScan.copy(toolId = newToolId) // Обновляем scanResult с toolId
                     )
                     _navigationEvent.value = "tool_saved"
                     
@@ -143,13 +137,11 @@ class ToolScannerViewModel @Inject constructor(
         // TODO: Открыть настройки камеры
     }
 
-    // ✅ ДОБАВЛЯЕМ: Очистка события навигации
     fun clearNavigation() {
         _navigationEvent.value = null
     }
 }
 
-// Остальные data class остаются без изменений...
 data class ToolScannerState(
     val hasCameraPermission: Boolean = false,
     val shouldShowPermissionRationale: Boolean = false,
@@ -165,12 +157,13 @@ sealed class ToolScannerEvent {
     object CaptureImage : ToolScannerEvent()
     object PickFromGallery : ToolScannerEvent()
     object AnalyzeTool : ToolScannerEvent()
-    object SaveTool : ToolScannerEvent() // ✅ ДОБАВЛЕНО!
+    object SaveTool : ToolScannerEvent()
     object OpenSettings : ToolScannerEvent()
 }
 
 data class ScanResult(
     val imagePath: String,
     val quality: Int,
-    val imageSize: String
+    val imageSize: String,
+    val toolId: String? = null // Добавлено поле toolId
 )

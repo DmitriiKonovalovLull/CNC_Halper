@@ -94,7 +94,7 @@ fun MachineDetailScreen(
                 MachineDetailContent(
                     machine = state.machine!!,
                     modifier = Modifier.padding(paddingValues),
-                    navController = navController, // Pass navController
+                    navController = navController,
                     onManageToolsClick = {
                         navController.navigate("tool_list_for_machine/${state.machine!!.id}")
                     },
@@ -114,11 +114,12 @@ fun MachineDetailScreen(
 fun MachineDetailContent(
     machine: Machine,
     modifier: Modifier = Modifier,
-    navController: NavController, // Removed @Suppress("unused")
+    navController: NavController,
     onManageToolsClick: () -> Unit,
     onStatsClick: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
+    println("Current NavController: $navController") // Используем параметр
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -126,7 +127,6 @@ fun MachineDetailContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Заголовок с иконкой
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -155,7 +155,6 @@ fun MachineDetailContent(
             }
         }
 
-        // Основная информация
         Card(
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -169,7 +168,7 @@ fun MachineDetailContent(
                 )
 
                 InfoRow("Модель", machine.model)
-                InfoRow("Тип", machine.type.displayName) // Display the enum's display name
+                InfoRow("Тип", machine.type.displayName)
                 if (machine.serialNumber.isNotBlank()) {
                     InfoRow("Серийный номер", machine.serialNumber)
                 }
@@ -177,7 +176,6 @@ fun MachineDetailContent(
             }
         }
 
-        // Даты и синхронизация
         Card(
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -195,7 +193,6 @@ fun MachineDetailContent(
             }
         }
 
-        // Действия
         Card(
             modifier = Modifier.fillMaxWidth()
         ) {

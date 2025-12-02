@@ -131,6 +131,8 @@ private fun EnergyModeCard(
     batteryLevel: Int,
     energyMode: EnergyMode
 ) {
+    val standardModeColor = Color(0xFF42A5F5) // Светло-синий
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -138,7 +140,7 @@ private fun EnergyModeCard(
         colors = CardDefaults.cardColors(
             containerColor = when (energyMode) {
                 EnergyMode.ECONOMY -> Color(0xFFFFF9C4)
-                EnergyMode.STANDARD -> Color(0xFFC8E6C9)
+                EnergyMode.STANDARD -> standardModeColor.copy(alpha = 0.2f)
                 EnergyMode.PERFORMANCE -> Color(0xFFB3E5FC)
             }
         )
@@ -156,7 +158,7 @@ private fun EnergyModeCard(
                 contentDescription = "Режим энергии",
                 tint = when (energyMode) {
                     EnergyMode.ECONOMY -> Color(0xFFF57C00)
-                    EnergyMode.STANDARD -> Color(0xFF388E3C)
+                    EnergyMode.STANDARD -> standardModeColor
                     EnergyMode.PERFORMANCE -> Color(0xFF1976D2)
                 }
             )
@@ -171,7 +173,11 @@ private fun EnergyModeCard(
                         EnergyMode.PERFORMANCE -> "ПОЛНЫЙ РЕЖИМ"
                     },
                     fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
+                    fontSize = 14.sp,
+                    color = when (energyMode) {
+                        EnergyMode.STANDARD -> standardModeColor
+                        else -> Color.Unspecified
+                    }
                 )
                 Text(
                     text = "Заряд: $batteryLevel% • ${getEnergyModeDescription(energyMode)}",
@@ -329,7 +335,7 @@ private fun QuickActionsCard(
                 )
 
                 ActionButton(
-                    icon = Icons.Default.Assistant,
+                    icon = Icons.Default.AutoFixHigh,
                     text = "Помощник\nИИ",
                     onClick = { /* TODO */ }
                 )

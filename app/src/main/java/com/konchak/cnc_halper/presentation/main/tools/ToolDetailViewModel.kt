@@ -56,16 +56,13 @@ class ToolDetailViewModel @Inject constructor(
         }
     }
 
-    // ✅ ИСПРАВЛЕНО: добавлен параметр toolId
     fun markToolUsed(toolId: String) {
         _navigationEvent.value = "end_operation/$toolId"
     }
 
-    // ✅ ИСПРАВЛЕНО: добавлен параметр toolId
     fun markForReplacement(toolId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                // Загружаем актуальные данные инструмента
                 val currentTool = toolRepository.getToolById(toolId.toLongOrNull() ?: 0L)
                 if (currentTool != null) {
                     val updatedTool = currentTool.copy(
@@ -73,7 +70,7 @@ class ToolDetailViewModel @Inject constructor(
                         status = "needs_replacement"
                     )
                     toolRepository.updateTool(updatedTool)
-                    _tool.value = updatedTool // Обновляем UI
+                    _tool.value = updatedTool
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "Ошибка: ${e.message}"
@@ -92,7 +89,6 @@ class ToolDetailViewModel @Inject constructor(
         }
     }
 
-    // В ToolDetailViewModel.kt - исправленный метод
     fun addUsageRecord(toolId: String, wearLevel: Int, notes: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -140,6 +136,21 @@ class ToolDetailViewModel @Inject constructor(
                 _errorMessage.value = "Ошибка загрузки изображения: ${e.message}"
             } finally {
                 _isLoading.value = false
+            }
+        }
+    }
+
+    fun updateWearLevel(toolId: String, wearLevel: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val currentTool = _tool.value
+                if (currentTool != null && currentTool.id == toolId) {
+                    val updatedTool = currentTool.copy(wearLevel = wearLevel)
+                    toolRepository.updateTool(updatedTool)
+                    _tool.value = updatedTool
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Ошибка обновления износа: ${e.message}"
             }
         }
     }
